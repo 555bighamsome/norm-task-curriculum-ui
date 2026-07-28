@@ -363,15 +363,25 @@ function simulate(scn, rules){
   const done = id => ptr[id] >= plans[id].length;
 
   for(let t=0; t<100; t++){
-    if(scn.agents.every(a => done(a.id))) return { ok:true, reason:"ok", frames };
-
-    // Entering a station occupies it for one step. A completed operator then
-    // leaves the active workspace, releasing the station for the next robot.
+    const releasedBefore = released.size;
+    // Entering a station occupies it for one step. A robot that completes a
+    // machine target then leaves the workspace, releasing the station.
     for(const agent of scn.agents){
       if(done(agent.id) && agent.goal.kind === "operate"){
         const machine = world.machines[agent.goal.machine];
         if(machine && sameCell(pos[agent.id], machine.cell)) released.add(agent.id);
       }
+    }
+    if(scn.agents.every(a => done(a.id))){
+      if(released.size > releasedBefore){
+        frames.push(snapshot(scn, pos, null, {
+          plans,
+          ptr,
+          released,
+          tick:t + 1,
+        }));
+      }
+      return { ok:true, reason:"ok", frames };
     }
 
     const intend = {};

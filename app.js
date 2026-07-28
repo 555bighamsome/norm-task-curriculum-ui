@@ -7,6 +7,7 @@ let rules = [];
 const sceneRuleDrafts = new Map();
 let library = [];
 let robotEls = {};
+let machineEls = {};
 let timer = null;
 let runs = [];
 let lastResult = null;
@@ -565,6 +566,7 @@ function buildBoard(){
   const board = $("board");
   board.innerHTML = "";
   robotEls = {};
+  machineEls = {};
   const frame = document.querySelector(".board-frame");
   const frameWidth = frame?.clientWidth || window.innerWidth;
   const availableWidth = Math.max(0, frameWidth - 40);
@@ -608,10 +610,9 @@ function buildBoard(){
     el.style.width = (CELL - 8) + "px";
     el.style.height = (CELL - 8) + "px";
     el.innerHTML = icon("machine", "board-feature-icon");
-    el.setAttribute("aria-label", machine.setup_role
-      ? `${MACHINE_ZH[machine.id] || machine.id}: ${ROLE_ZH[machine.setup_role] || machine.setup_role} prepares it first`
-      : (MACHINE_ZH[machine.id] || machine.id));
+    el.setAttribute("aria-label", MACHINE_ZH[machine.id] || machine.id);
     board.appendChild(el);
+    machineEls[machine.id] = el;
   });
 
   Object.values(scn.items).forEach(item => {
@@ -780,12 +781,15 @@ function renderAgentProgress(frame){
 }
 
 function renderFrame(frame){
+  Object.values(machineEls).forEach(el => el.classList.remove("available"));
   scn.agents.forEach(agent => {
     const p = frame.pos[agent.id];
     const el = robotEls[agent.id];
     if(!el || !p) return;
     const meta = frame.agents?.[agent.id] || frame.agents?.[String(agent.id)] || null;
-    el.style.display = meta?.released ? "none" : "";
+    const released = !!meta?.released;
+    el.classList.toggle("released", released);
+    el.setAttribute("aria-hidden", released ? "true" : "false");
     el.style.left = (p[1] * CELL + 7) + "px";
     el.style.top = (p[0] * CELL + 7) + "px";
     el.classList.toggle("done", !!meta?.done);
@@ -794,6 +798,9 @@ function renderFrame(frame){
     el.classList.toggle("failed", !!meta?.failed);
     el.setAttribute("aria-label", `Robot ${agent.id}: ${stateText(meta)}`);
     el.innerHTML = robotMarkup(agent, meta);
+    if(released && agent.goal?.kind === "operate"){
+      machineEls[agent.goal.machine]?.classList.add("available");
+    }
   });
   document.querySelectorAll(".cell.flash").forEach(el => el.classList.remove("flash"));
   if(frame.event && frame.event.cell){
