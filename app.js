@@ -211,14 +211,6 @@ function robotMarkup(agent, meta){
   ].join("");
 }
 
-function taskPrompt(task){
-  // Keep later scenes visually quiet. Their context is available in the
-  // first-view guide instead of being repeated above the map.
-  return /^trial_[123]$/.test(task.id)
-    ? (task.description || "")
-    : "";
-}
-
 const introducedFeatures = new Set();
 
 const SCENE_GUIDES = {
@@ -529,8 +521,6 @@ function buildTabs(){
     button.onclick = () => switchTask(index);
     tabs.appendChild(button);
   });
-  const goalDescription = $("scene-goal-description");
-  if(goalDescription) goalDescription.textContent = taskPrompt(scn);
   const sceneLabel = $("scene-label");
   if(sceneLabel) sceneLabel.textContent = scn.label;
   const position = $("scene-position");

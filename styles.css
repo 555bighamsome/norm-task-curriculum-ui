@@ -895,7 +895,6 @@ button.btn.primary:hover{background:#444;border-color:#444;}
 .legend-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
 .map-key-body{padding-top:6px;}
 
-.scene-goal-description:empty{display:none;}
 .map-key-body{grid-template-columns:repeat(3,minmax(0,1fr));}
 .role-key-avatar{border-radius:4px;box-shadow:none;}
 .tutorial-open-label{display:none;}
