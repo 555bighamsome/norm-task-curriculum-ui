@@ -216,23 +216,23 @@ const introducedFeatures = new Set();
 const SCENE_GUIDES = {
   trial_1: {
     title:"Cold storage and spills",
-    body:"A spill can damage shared cold storage if it is carried into the area. The simulation will show which robot causes the problem and which robots still need to enter.",
-    example:"World fact: carrying a spill into cold storage contaminates the shared area.",
+    body:"The snowflake marks a cold-storage square. The spill symbol next to a robot means that it is currently carrying a spill.",
+    example:"Run the scene to observe what happens before deciding whether a rule is needed.",
   },
   trial_2: {
-    title:"Shared squares",
-    body:"Robots plan their routes at the same time. If two robots try to enter the same square in the same step, they collide.",
-    example:"World fact: the target square is contested when multiple robots intend to enter it.",
+    title:"Simultaneous movement",
+    body:"Robots choose their routes independently and move at the same time.",
+    example:"Run the scene to observe what happens when their planned routes interact.",
   },
   trial_3: {
     title:"Shared machines",
-    body:"A machine can be used by only one robot in a time step. At this station, the operator must enter first to prepare it; the carrier can use it after preparation.",
-    example:"World fact: a robot leaves the machine after using it, so another robot can use it later.",
+    body:"The gear marks a machine square. A robot uses the machine by entering this square. After completing its machine target, the robot leaves the square.",
+    example:"Run the scene to observe what happens when more than one robot approaches the machine.",
   },
   trial_5: {
     title:"Cleaner robots",
-    body:"A cleaner carrying a spill does not contaminate cold storage. A non-cleaner carrying a spill into cold storage does.",
-    example:"The cleaner icon identifies this robot role.",
+    body:"The cleaner icon identifies the Cleaner role. A robot's role and what it is currently carrying are separate properties.",
+    example:"Run the scene to observe how the newly introduced role behaves.",
   },
 };
 
@@ -247,35 +247,35 @@ function sceneFeatureItems(task){
       present:task.walls.size > 0,
       iconName:"wall",
       title:"Wall",
-      detail:"Robots cannot move through this square.",
+      detail:"The brick pattern marks a wall square. Robots cannot enter it, so their routes must go around it.",
     },
     {
       id:"shared-square",
       present:task.activeAgentCount > 1,
       iconName:"floor",
-      title:"Shared square",
-      detail:"Robots plan at the same time. If several intend to enter one square in the same step, they collide.",
+      title:"Simultaneous movement",
+      detail:"Robots choose their routes independently and move at the same time.",
     },
     {
       id:"cold",
       present:hasCold,
       iconName:"cold",
       title:"Cold storage",
-      detail:"Carrying a spill into this shared area contaminates it.",
+      detail:"The snowflake marks a cold-storage square.",
     },
     {
       id:"machine",
       present:Object.keys(task.machines).length > 0,
       iconName:"machine",
       title:"Machine",
-      detail:"Only one robot can enter the machine square in a time step; it is released after use.",
+      detail:"The gear marks a machine square. A robot uses the machine by entering it and leaves after completing its machine target.",
     },
     {
       id:"target",
       present:task.agents.some(agent => agent.active),
       iconName:"target",
       title:"Dashed numbered square",
-      detail:"This is the target for the robot with the same number.",
+      detail:"This is the destination of the robot with the same number. Reaching it completes that robot's task.",
       target:true,
     },
     {
@@ -283,7 +283,7 @@ function sceneFeatureItems(task){
       present:hasSpill,
       iconName:"spill",
       title:"Spill",
-      detail:"The robot is carrying a spill.",
+      detail:"This symbol next to a robot means that the robot is currently carrying a spill.",
     },
     {
       id:"carrier",
@@ -291,7 +291,7 @@ function sceneFeatureItems(task){
       iconName:"carrier",
       role:"carrier",
       title:"Carrier",
-      detail:"A robot that carries cargo to its target.",
+      detail:"This icon identifies the Carrier role. Role and carried item are separate; the spill symbol shows whether it is carrying a spill.",
     },
     {
       id:"operator",
@@ -299,7 +299,7 @@ function sceneFeatureItems(task){
       iconName:"operator",
       role:"operator",
       title:"Operator",
-      detail:"At a setup machine, the operator enters first to prepare it.",
+      detail:"This icon identifies the Operator role. Role and carried item are separate properties.",
     },
     {
       id:"cleaner",
@@ -307,7 +307,7 @@ function sceneFeatureItems(task){
       iconName:"cleaner",
       role:"cleaner",
       title:"Cleaner",
-      detail:"A cleaner can enter cold storage with a spill without causing contamination.",
+      detail:"This icon identifies the Cleaner role. Role and carried item are separate properties.",
     },
   ];
   return specs.filter(spec => spec.present && !introducedFeatures.has(spec.id));
