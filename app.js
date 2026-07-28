@@ -217,9 +217,6 @@ const SCENE_GUIDES = {
   trial_1: {
     title:"Cold storage and spills",
   },
-  trial_2: {
-    title:"Simultaneous movement",
-  },
   trial_3: {
     title:"Shared machines",
   },
@@ -229,8 +226,6 @@ const SCENE_GUIDES = {
 };
 
 const GUIDE_COPY = {
-  wall:"Robots cannot enter this square.",
-  sharedSquare:"Robots move together; entering the same square causes a collision.",
   cold:"A spill contaminates this square.",
   machine:"Enter to use it; one robot per step, then it retreats.",
   target:"Matches the robot with the same number.",
@@ -247,20 +242,6 @@ function sceneFeatureItems(task){
   const hasSpill = task.agents.some(agent => agent.active && agent.carrying === "spill") ||
     Object.values(task.items).some(item => item.hazardous);
   const specs = [
-    {
-      id:"wall",
-      present:task.walls.size > 0,
-      iconName:"wall",
-      title:"Wall",
-      detail:GUIDE_COPY.wall,
-    },
-    {
-      id:"shared-square",
-      present:task.activeAgentCount > 1,
-      iconName:"floor",
-      title:"Simultaneous movement",
-      detail:GUIDE_COPY.sharedSquare,
-    },
     {
       id:"cold",
       present:hasCold,
@@ -1317,25 +1298,16 @@ function renderLegend(){
     Object.values(scn.items).some(item => item.hazardous);
   const environmentTiles = [
     legendTile(legendIcon("floor", "floor-sample"), "Open floor", GUIDE_COPY.floor, "floor-tile"),
-    scn.walls.size ? legendTile(legendIcon("wall", "wall-sample"), "Wall", GUIDE_COPY.wall, "wall-tile") : "",
+    scn.walls.size ? legendTile(legendIcon("wall", "wall-sample"), "Wall", "", "wall-tile") : "",
     zoneSet.has("cold") ? legendTile(legendIcon("cold", "cold-sample"), "Cold storage", GUIDE_COPY.cold, "zone-tile cold") : "",
     Object.keys(scn.machines).length ? legendTile(legendIcon("machine", "machine-sample"), "Machine", GUIDE_COPY.machine, "machine-tile") : "",
     hasSpill ? legendTile(legendIcon("spill", "spill-sample"), "Spill", GUIDE_COPY.spill, "item-tile") : "",
   ].filter(Boolean).join("");
-  const mechanicsTiles = scn.activeAgentCount > 1
-    ? legendTile(
-      legendIcon("floor", "floor-sample"),
-      "Simultaneous movement",
-      GUIDE_COPY.sharedSquare,
-      "movement-tile",
-    )
-    : "";
 
   $("legend").innerHTML = `<section class="map-key" aria-labelledby="map-key-title"><h3 class="map-key-title" id="map-key-title">Map key &amp; guide</h3><div class="map-key-body">${[
     legendSection("Robot roles", roleTiles, "roles"),
     legendSection("Target", targetTile, "targets"),
     legendSection("Environment", environmentTiles, "environment"),
-    mechanicsTiles ? legendSection("Movement", mechanicsTiles, "movement") : "",
   ].join("")}</div></section>`;
   const conditionLines = RULE_SCHEMA.map(object => {
     const fields = object.properties.map(property =>
