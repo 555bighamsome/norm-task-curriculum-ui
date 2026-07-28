@@ -162,6 +162,20 @@ function agentColor(agent){
   return COL[agent.id % COL.length];
 }
 
+const ROLE_COLORS = {
+  carrier: COL[0],
+  operator: COL[1],
+  cleaner: COL[2],
+};
+
+function roleColor(role){
+  return ROLE_COLORS[role] || COL[5];
+}
+
+function roleLegendAvatar(role, extraClass=""){
+  return `<span class="agent-avatar role-key-avatar ${extraClass}" style="--agent-color:${roleColor(role)}">${icon(roleIconName(role), "agent-avatar-icon")}</span>`;
+}
+
 function roleBadge(agent, className=""){
   return `<span class="role-badge role-${agent.role} ${className}">${ROLE_SHORT_ZH[agent.role] || "R"}</span>`;
 }
@@ -316,8 +330,7 @@ function guideFeatureMarkup(feature){
   if(feature.target){
     symbol = '<span class="legend-target-sample" style="--agent-color:#555"><span>0</span></span>';
   }else if(feature.role){
-    const agent = scn.agents.find(candidate => candidate.active && candidate.role === feature.role);
-    symbol = agent ? agentAvatar(agent) : legendIcon(feature.iconName, feature.legendClass || `${feature.iconName}-sample`);
+    symbol = roleLegendAvatar(feature.role);
   }else{
     symbol = legendIcon(feature.iconName, feature.legendClass || `${feature.iconName}-sample`);
   }
@@ -359,11 +372,7 @@ function showSceneGuide(force=false){
   if(!backdrop || !newFeatures.length) return;
   $("guide-kicker").textContent = `${scn.label} · Scene guide`;
   $("guide-title").textContent = guide?.title || "New elements in this scene";
-  const guideSymbols = guide?.symbols || [];
-  $("guide-items").innerHTML = [
-    ...newFeatures.map(guideFeatureMarkup),
-    ...guideSymbols.map(guideFeatureMarkup),
-  ].join("");
+  $("guide-items").innerHTML = newFeatures.map(guideFeatureMarkup).join("");
   $("guide-body").textContent = guide?.body ||
     "This scene contains several elements you may not have seen yet. The symbols below match the map and the Map key.";
   $("guide-example").textContent = guide?.example ||
@@ -435,7 +444,7 @@ function renderScenePickerKey(){
   const roleTiles = roles.map(role => {
     const agent = TASKS.flatMap(task => task.agents)
       .find(candidate => candidate.active && candidate.role === role);
-    return `<div class="picker-key-tile"><span class="picker-key-symbol role-symbol" style="--agent-color:${agentColor(agent)}">${icon(roleIconName(role))}</span><span>${ROLE_ZH[role] || role}</span></div>`;
+    return `<div class="picker-key-tile">${roleLegendAvatar(role, "picker-key-symbol role-symbol")}<span>${ROLE_ZH[role] || role}</span></div>`;
   }).join("");
   const environmentTiles = [
     ["floor", "Open floor"],
@@ -1331,8 +1340,7 @@ function renderLegend(){
   const activeAgents = scn.agents.filter(agent => agent.active);
   const roles = [...new Set(activeAgents.map(agent => agent.role))];
   const roleTiles = roles.map(role => {
-    const agent = activeAgents.find(candidate => candidate.role === role);
-    const symbol = `<span class="agent-avatar role-key-avatar" style="--agent-color:${agentColor(agent)}">${icon(roleIconName(role), "agent-avatar-icon")}</span>`;
+    const symbol = roleLegendAvatar(role);
     return legendTile(symbol, ROLE_ZH[role] || role, "Robot role", "role-tile");
   }).join("");
 
