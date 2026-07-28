@@ -1627,3 +1627,17 @@ body{min-height:0;}
   scrollbar-gutter:stable;
   scrollbar-width:thin;
 }
+
+/* Use a compact filled state for the selected scene instead of an underline. */
+.tabs{border-bottom:0;}
+.tab{
+  padding:3px 10px 7px;
+  border:1px solid transparent;
+  border-radius:4px;
+}
+.tab.active{
+  border:1px solid #8daed0;
+  background:#eef5fb;
+  color:#1f659e;
+}
+.tab.active::before{display:none;}
