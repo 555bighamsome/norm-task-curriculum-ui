@@ -21,7 +21,6 @@ let lastRuleEventIndex = 0;
 let nextRuleId = 1;
 let rulebookRevision = 0;
 const sceneGuidesSeen = new Set();
-const guideFeatureCatalog = new Map();
 let initialSceneChosen = false;
 const shiftStates = Object.fromEntries(TASKS.map(task => [
   task.id,
@@ -229,6 +228,19 @@ const SCENE_GUIDES = {
   },
 };
 
+const GUIDE_COPY = {
+  wall:"Robots cannot enter this square.",
+  sharedSquare:"Robots move together; entering the same square causes a collision.",
+  cold:"A spill contaminates this square.",
+  machine:"Enter to use it; one robot per step, then it retreats.",
+  target:"Matches the robot with the same number.",
+  spill:"This robot is carrying a spill.",
+  carrier:"Carries cargo to its target.",
+  operator:"Prepares a setup machine before a Carrier uses it.",
+  cleaner:"Can carry a spill into cold storage without contamination.",
+  floor:"Robots can enter this square.",
+};
+
 function sceneFeatureItems(task){
   const roles = new Set(task.agents.filter(agent => agent.active).map(agent => agent.role));
   const hasCold = Object.values(task.zones).includes("cold");
@@ -240,35 +252,35 @@ function sceneFeatureItems(task){
       present:task.walls.size > 0,
       iconName:"wall",
       title:"Wall",
-      detail:"Robots cannot enter this square.",
+      detail:GUIDE_COPY.wall,
     },
     {
       id:"shared-square",
       present:task.activeAgentCount > 1,
       iconName:"floor",
       title:"Simultaneous movement",
-      detail:"Robots move together. Entering the same square causes a collision.",
+      detail:GUIDE_COPY.sharedSquare,
     },
     {
       id:"cold",
       present:hasCold,
       iconName:"cold",
       title:"Cold storage",
-      detail:"A spill can contaminate this square.",
+      detail:GUIDE_COPY.cold,
     },
     {
       id:"machine",
       present:Object.keys(task.machines).length > 0,
       iconName:"machine",
       title:"Machine",
-      detail:"Enter to use it. One robot uses it per step, then retreats.",
+      detail:GUIDE_COPY.machine,
     },
     {
       id:"target",
       present:task.agents.some(agent => agent.active),
       iconName:"target",
       title:"Dashed numbered square",
-      detail:"Target for the robot with the same number.",
+      detail:GUIDE_COPY.target,
       target:true,
     },
     {
@@ -276,7 +288,7 @@ function sceneFeatureItems(task){
       present:hasSpill,
       iconName:"spill",
       title:"Spill",
-      detail:"This robot is carrying a spill.",
+      detail:GUIDE_COPY.spill,
     },
     {
       id:"carrier",
@@ -284,7 +296,7 @@ function sceneFeatureItems(task){
       iconName:"carrier",
       role:"carrier",
       title:"Carrier",
-      detail:"Carrier role.",
+      detail:GUIDE_COPY.carrier,
     },
     {
       id:"operator",
@@ -292,7 +304,7 @@ function sceneFeatureItems(task){
       iconName:"operator",
       role:"operator",
       title:"Operator",
-      detail:"Operator role.",
+      detail:GUIDE_COPY.operator,
     },
     {
       id:"cleaner",
@@ -300,7 +312,7 @@ function sceneFeatureItems(task){
       iconName:"cleaner",
       role:"cleaner",
       title:"Cleaner",
-      detail:"Cleaner role.",
+      detail:GUIDE_COPY.cleaner,
     },
   ];
   return specs.filter(spec => spec.present && !introducedFeatures.has(spec.id));
@@ -316,18 +328,6 @@ function guideFeatureMarkup(feature){
     symbol = legendIcon(feature.iconName, feature.legendClass || `${feature.iconName}-sample`);
   }
   return `<div class="guide-item">${symbol}<span><strong>${feature.title}</strong><small>${feature.detail}</small></span></div>`;
-}
-
-function renderGuideSummary(){
-  const summary = $("guide-summary");
-  const items = $("guide-summary-items");
-  if(!summary || !items) return;
-  if(!guideFeatureCatalog.size){
-    summary.hidden = true;
-    return;
-  }
-  items.innerHTML = [...guideFeatureCatalog.values()].map(guideFeatureMarkup).join("");
-  summary.hidden = false;
 }
 
 function sceneHasGuide(task){
@@ -362,9 +362,7 @@ function showSceneGuide(force=false){
   example.hidden = !example.textContent;
   newFeatures.forEach(feature => {
     introducedFeatures.add(feature.id);
-    guideFeatureCatalog.set(feature.id, feature);
   });
-  renderGuideSummary();
   renderSceneGuideButton();
   backdrop.hidden = false;
   recordRuleEvent("scene_guide_opened", {scene_guide_id:scn.id, first_view:!sceneGuidesSeen.has(scn.id)});
@@ -523,7 +521,6 @@ function buildTabs(){
     position.textContent = `${scn.label} / ${TASKS.length}`;
   }
   renderSceneGuideButton();
-  renderGuideSummary();
   const visited = Object.values(shiftStates).filter(state => state.visited).length;
   const currentSolved = Object.values(shiftStates).filter(state =>
     state.lastOk
@@ -1301,30 +1298,44 @@ function renderLegend(){
   const roles = [...new Set(activeAgents.map(agent => agent.role))];
   const roleTiles = roles.map(role => {
     const symbol = roleLegendAvatar(role);
-    return legendTile(symbol, ROLE_ZH[role] || role, "Robot role", "role-tile");
+    return legendTile(
+      symbol,
+      ROLE_ZH[role] || role,
+      GUIDE_COPY[role] || "Robot role.",
+      "role-tile",
+    );
   }).join("");
 
   const targetTile = legendTile(
     '<span class="legend-target-sample" style="--agent-color:#555"><span>0</span></span>',
     "Target",
-    "Dashed number matches the robot number",
+    GUIDE_COPY.target,
     "target-tile",
   );
   const zoneSet = new Set(Object.values(scn.zones));
   const hasSpill = activeAgents.some(agent => agent.carrying === "spill") ||
     Object.values(scn.items).some(item => item.hazardous);
   const environmentTiles = [
-    legendTile(legendIcon("floor", "floor-sample"), "Open floor", "Available for movement", "floor-tile"),
-    scn.walls.size ? legendTile(legendIcon("wall", "wall-sample"), "Wall", "Not available for movement", "wall-tile") : "",
-    zoneSet.has("cold") ? legendTile(legendIcon("cold", "cold-sample"), "Cold storage", "A spill can contaminate it", "zone-tile cold") : "",
-    Object.keys(scn.machines).length ? legendTile(legendIcon("machine", "machine-sample"), "Machine", "One robot enters at a time", "machine-tile") : "",
-    hasSpill ? legendTile(legendIcon("spill", "spill-sample"), "Spill", "Carried by a robot", "item-tile") : "",
+    legendTile(legendIcon("floor", "floor-sample"), "Open floor", GUIDE_COPY.floor, "floor-tile"),
+    scn.walls.size ? legendTile(legendIcon("wall", "wall-sample"), "Wall", GUIDE_COPY.wall, "wall-tile") : "",
+    zoneSet.has("cold") ? legendTile(legendIcon("cold", "cold-sample"), "Cold storage", GUIDE_COPY.cold, "zone-tile cold") : "",
+    Object.keys(scn.machines).length ? legendTile(legendIcon("machine", "machine-sample"), "Machine", GUIDE_COPY.machine, "machine-tile") : "",
+    hasSpill ? legendTile(legendIcon("spill", "spill-sample"), "Spill", GUIDE_COPY.spill, "item-tile") : "",
   ].filter(Boolean).join("");
+  const mechanicsTiles = scn.activeAgentCount > 1
+    ? legendTile(
+      legendIcon("floor", "floor-sample"),
+      "Simultaneous movement",
+      GUIDE_COPY.sharedSquare,
+      "movement-tile",
+    )
+    : "";
 
-  $("legend").innerHTML = `<section class="map-key" aria-labelledby="map-key-title"><h3 class="map-key-title" id="map-key-title">Map key</h3><div class="map-key-body">${[
+  $("legend").innerHTML = `<section class="map-key" aria-labelledby="map-key-title"><h3 class="map-key-title" id="map-key-title">Map key &amp; guide</h3><div class="map-key-body">${[
     legendSection("Robot roles", roleTiles, "roles"),
     legendSection("Target", targetTile, "targets"),
     legendSection("Environment", environmentTiles, "environment"),
+    mechanicsTiles ? legendSection("Movement", mechanicsTiles, "movement") : "",
   ].join("")}</div></section>`;
   const conditionLines = RULE_SCHEMA.map(object => {
     const fields = object.properties.map(property =>
@@ -1435,7 +1446,6 @@ function buildRunFeedback(result){
     return {
       title:"Solved",
       observation:`All robots completed in ${step} steps${waits.size ? `; ${[...waits].map(id => `Robot ${id}`).join(" and ")} waited when a rule applied` : ""}.`,
-      question:"Check whether every condition is necessary.",
       kind:"ok",
     };
   }
@@ -1444,7 +1454,6 @@ function buildRunFeedback(result){
     return {
       title:"Not solved",
       observation:`Step ${step}: ${robots} entered the ${square} and contaminated it.`,
-      question:"Which parts of this move made it unsafe, and which entries must remain allowed?",
       kind:"bad",
     };
   }
@@ -1452,7 +1461,6 @@ function buildRunFeedback(result){
     return {
       title:"Not solved",
       observation:`Step ${step}: ${robots} tried to enter the same ${square}.`,
-      question:"Which visible difference should determine who waits?",
       kind:"bad",
     };
   }
@@ -1460,7 +1468,6 @@ function buildRunFeedback(result){
     return {
       title:"No legal route",
       observation:`${feedbackAgent(result.blockedAgent, frame)} cannot reach its target under the current rules.`,
-      question:"What distinguishes this required move from the move the rule should prevent?",
       kind:"bad",
     };
   }
@@ -1473,7 +1480,6 @@ function buildRunFeedback(result){
     return {
       title:"No progress",
       observation:`${waitingRobots || "The robots"} kept waiting until the scene stopped.`,
-      question:"Compare the moment the robot first waited with the later steps.",
       kind:"bad",
     };
   }
@@ -1481,14 +1487,12 @@ function buildRunFeedback(result){
     return {
       title:"Not solved",
       observation:`Step ${step}: ${robots} entered the machine before it was ready.`,
-      question:"Compare the order and roles of the robots approaching it.",
       kind:"bad",
     };
   }
   return {
     title:"Not solved",
     observation:reasonText(result.reason, result),
-    question:"Compare the failed move with a move that should remain allowed.",
     kind:"bad",
   };
 }
@@ -1503,10 +1507,7 @@ function setRunFeedback(result){
   title.textContent = feedback.title;
   const observation = document.createElement("span");
   observation.textContent = feedback.observation;
-  const question = document.createElement("span");
-  question.className = "feedback-question";
-  question.textContent = feedback.question;
-  status.append(title, observation, question);
+  status.append(title, observation);
   return feedback;
 }
 
@@ -1625,7 +1626,6 @@ function play(){
     reason: result.reason,
     reason_text: reasonText(result.reason, result),
     feedback_observation:feedback.observation,
-    feedback_question:feedback.question,
     curriculum_message:result.curriculumMessage || null,
     frames: result.frames,
     agent_report: result.frames.length ? result.frames[result.frames.length - 1].agents : {},
@@ -1742,7 +1742,7 @@ function exportJson(){
 }
 
 function exportCsv(){
-  const cols = ["shift_id","shift_label","shift_attempt_index","global_attempt_index","rulebook_revision","active_rule_ids","active_library_rule_ids","saved_library_rule_ids","ok","reason","feedback_observation","feedback_question","rule_summary","time_from_trial_start_ms","time_from_experiment_start_ms","time_from_last_attempt_ms","timestamp"];
+  const cols = ["shift_id","shift_label","shift_attempt_index","global_attempt_index","rulebook_revision","active_rule_ids","active_library_rule_ids","saved_library_rule_ids","ok","reason","feedback_observation","rule_summary","time_from_trial_start_ms","time_from_experiment_start_ms","time_from_last_attempt_ms","timestamp"];
   const esc = v => '"' + String(v ?? "").replaceAll('"', '""') + '"';
   const rows = [cols.join(",")].concat(runs.map(r => cols.map(c => esc(r[c])).join(",")));
   download("norm-task-log.csv", "text/csv", rows.join("\n") + "\n");

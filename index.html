@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Shared Rulebook</title>
-<link rel="stylesheet" href="styles.css?v=ui-v26-machine-queue">
+<link rel="stylesheet" href="styles.css?v=ui-v28-merged-guide">
 </head>
 <body>
 <div class="wrap">
@@ -32,7 +32,7 @@
         <div class="board-frame">
           <div class="board" id="board"></div>
         </div>
-        <section class="legend" id="legend" aria-label="Scene key"></section>
+        <section class="legend" id="legend" aria-label="Map key and guide"></section>
       </div>
       <div class="status" id="status" role="status" aria-live="polite"></div>
       <div class="agent-panel" id="agent-progress"></div>
@@ -50,12 +50,6 @@
     </section>
 
     <section class="rules-panel" aria-labelledby="rules-panel-title">
-      <section class="guide-summary" id="guide-summary" aria-labelledby="guide-summary-title" hidden>
-        <div class="guide-summary-heading">
-          <strong id="guide-summary-title">Guide</strong>
-        </div>
-        <div class="guide-summary-items" id="guide-summary-items"></div>
-      </section>
       <div class="section-heading rules-heading">
         <div>
           <h2 id="rules-panel-title">Rules</h2>
@@ -117,8 +111,8 @@
   </section>
 </div>
 
-<script src="data/tasks.generated.js?v=ui-v26-machine-queue"></script>
-<script src="engine.js?v=ui-v26-machine-queue"></script>
-<script src="app.js?v=ui-v26-machine-queue"></script>
+<script src="data/tasks.generated.js?v=ui-v28-merged-guide"></script>
+<script src="engine.js?v=ui-v28-merged-guide"></script>
+<script src="app.js?v=ui-v28-merged-guide"></script>
 </body>
 </html>
