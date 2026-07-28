@@ -1608,6 +1608,7 @@ body{min-height:0;}
 .scene-run-controls #run{min-width:145px;}
 .scene-run-controls .step-nav{gap:6px;}
 .scene-run-controls .step-label{white-space:nowrap;}
+.scene-bottom-controls{display:flex;align-items:center;justify-content:flex-start;margin-top:12px;}
 .rules-panel{padding-left:4px;}
 .rulebook-actions{margin-top:14px;}
 .rulebook-actions .add-rule-button{flex:1.15 1 0;}
