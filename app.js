@@ -217,23 +217,15 @@ const introducedFeatures = new Set();
 const SCENE_GUIDES = {
   trial_1: {
     title:"Cold storage and spills",
-    body:"The snowflake marks a cold-storage square. The spill symbol next to a robot means that it is currently carrying a spill.",
-    example:"Run the scene to observe what happens before deciding whether a rule is needed.",
   },
   trial_2: {
     title:"Simultaneous movement",
-    body:"Robots choose their routes independently and move at the same time.",
-    example:"Run the scene to observe what happens when their planned routes interact.",
   },
   trial_3: {
     title:"Shared machines",
-    body:"The gear marks a machine square. A robot uses the machine by entering this square. After completing its machine target, the robot leaves the square.",
-    example:"Run the scene to observe what happens when more than one robot approaches the machine.",
   },
   trial_5: {
     title:"Cleaner robots",
-    body:"The cleaner icon identifies the Cleaner role. A robot's role and what it is currently carrying are separate properties.",
-    example:"Run the scene to observe how the newly introduced role behaves.",
   },
 };
 
@@ -248,35 +240,35 @@ function sceneFeatureItems(task){
       present:task.walls.size > 0,
       iconName:"wall",
       title:"Wall",
-      detail:"The brick pattern marks a wall square. Robots cannot enter it, so their routes must go around it.",
+      detail:"Robots cannot enter this square.",
     },
     {
       id:"shared-square",
       present:task.activeAgentCount > 1,
       iconName:"floor",
       title:"Simultaneous movement",
-      detail:"Robots choose their routes independently and move at the same time.",
+      detail:"Robots move together. Entering the same square causes a collision.",
     },
     {
       id:"cold",
       present:hasCold,
       iconName:"cold",
       title:"Cold storage",
-      detail:"The snowflake marks a cold-storage square.",
+      detail:"A spill can contaminate this square.",
     },
     {
       id:"machine",
       present:Object.keys(task.machines).length > 0,
       iconName:"machine",
       title:"Machine",
-      detail:"The gear marks a machine square. A robot uses the machine by entering it and leaves after completing its machine target.",
+      detail:"Enter to use it. One robot uses it per step, then retreats.",
     },
     {
       id:"target",
       present:task.agents.some(agent => agent.active),
       iconName:"target",
       title:"Dashed numbered square",
-      detail:"This is the destination of the robot with the same number. Reaching it completes that robot's task.",
+      detail:"Target for the robot with the same number.",
       target:true,
     },
     {
@@ -284,7 +276,7 @@ function sceneFeatureItems(task){
       present:hasSpill,
       iconName:"spill",
       title:"Spill",
-      detail:"This symbol next to a robot means that the robot is currently carrying a spill.",
+      detail:"This robot is carrying a spill.",
     },
     {
       id:"carrier",
@@ -292,7 +284,7 @@ function sceneFeatureItems(task){
       iconName:"carrier",
       role:"carrier",
       title:"Carrier",
-      detail:"This icon identifies the Carrier role. Role and carried item are separate; the spill symbol shows whether it is carrying a spill.",
+      detail:"Carrier role.",
     },
     {
       id:"operator",
@@ -300,7 +292,7 @@ function sceneFeatureItems(task){
       iconName:"operator",
       role:"operator",
       title:"Operator",
-      detail:"This icon identifies the Operator role. Role and carried item are separate properties.",
+      detail:"Operator role.",
     },
     {
       id:"cleaner",
@@ -308,7 +300,7 @@ function sceneFeatureItems(task){
       iconName:"cleaner",
       role:"cleaner",
       title:"Cleaner",
-      detail:"This icon identifies the Cleaner role. Role and carried item are separate properties.",
+      detail:"Cleaner role.",
     },
   ];
   return specs.filter(spec => spec.present && !introducedFeatures.has(spec.id));
@@ -362,10 +354,12 @@ function showSceneGuide(force=false){
   $("guide-kicker").textContent = `${scn.label} · Scene guide`;
   $("guide-title").textContent = guide?.title || "New elements in this scene";
   $("guide-items").innerHTML = newFeatures.map(guideFeatureMarkup).join("");
-  $("guide-body").textContent = guide?.body ||
-    "This scene contains several elements you may not have seen yet. The symbols below match the map and the Map key.";
-  $("guide-example").textContent = guide?.example ||
-    "These icons match the symbols on the map and in the Map key. Rules stay with this scene when you return; saved rules can be reused in later scenes.";
+  const body = $("guide-body");
+  const example = $("guide-example");
+  body.textContent = guide?.body || "";
+  body.hidden = !body.textContent;
+  example.textContent = guide?.example || "";
+  example.hidden = !example.textContent;
   newFeatures.forEach(feature => {
     introducedFeatures.add(feature.id);
     guideFeatureCatalog.set(feature.id, feature);
@@ -803,7 +797,7 @@ function renderFrame(frame){
     }
   });
   document.querySelectorAll(".cell.flash").forEach(el => el.classList.remove("flash"));
-  if(frame.event && frame.event.cell){
+  if(frame.event && frame.event.cell && frame.event.type !== "machine-retreat"){
     const cell = document.querySelector('[data-cell="' + K(frame.event.cell[0], frame.event.cell[1]) + '"]');
     if(cell) cell.classList.add("flash");
   }
@@ -1385,6 +1379,128 @@ function setStatus(text, kind){
   status.className = "status" + (kind ? " " + kind : "");
 }
 
+const DIRECTION_TEXT = {N:"north", S:"south", E:"east", W:"west"};
+
+function feedbackCellType(cell){
+  if(!cell) return "square";
+  if(Object.values(scn.machines).some(machine => sameCell(machine.cell, cell))){
+    return "machine square";
+  }
+  if(scn.zones[K(cell[0], cell[1])] === "cold") return "cold-storage square";
+  return "open-floor square";
+}
+
+function feedbackAgent(id, frame){
+  const agent = scn.agents.find(row => String(row.id) === String(id));
+  if(!agent) return `Robot ${id}`;
+  const meta = frame?.agents?.[id] || frame?.agents?.[String(id)] || {};
+  const details = [
+    agent.role.charAt(0).toUpperCase() + agent.role.slice(1),
+    agent.carrying === "spill" ? "carrying a spill" : "no spill",
+  ];
+  if(meta.intent?.dir) details.push(`moving ${DIRECTION_TEXT[meta.intent.dir] || meta.intent.dir}`);
+  return `Robot ${id} (${details.join(", ")})`;
+}
+
+function lastWaitingFrame(result){
+  return [...(result.frames || [])].reverse().find(frame =>
+    Object.values(frame.agents || {}).some(agent => agent.waiting)
+  ) || null;
+}
+
+function buildRunFeedback(result){
+  const frame = result.frames?.[result.frames.length - 1] || null;
+  const event = frame?.event || null;
+  const step = frame?.tick ?? Math.max(0, (result.frames?.length || 1) - 1);
+  const ids = event?.agents || (event?.agent !== undefined ? [event.agent] : []);
+  const robots = ids.map(id => feedbackAgent(id, frame)).join(" and ");
+  const square = feedbackCellType(event?.cell);
+
+  if(result.ok){
+    const waits = new Set();
+    (result.frames || []).forEach(row => {
+      Object.entries(row.agents || {}).forEach(([id, meta]) => {
+        if(meta.waiting) waits.add(id);
+      });
+    });
+    return {
+      title:"Solved",
+      observation:`All robots completed in ${step} steps${waits.size ? `; ${[...waits].map(id => `Robot ${id}`).join(" and ")} waited when a rule applied` : ""}.`,
+      question:"Check whether every condition is necessary.",
+      kind:"ok",
+    };
+  }
+
+  if(result.reason?.startsWith("pollution:")){
+    return {
+      title:"Not solved",
+      observation:`Step ${step}: ${robots} entered the ${square} and contaminated it.`,
+      question:"Which parts of this move made it unsafe, and which entries must remain allowed?",
+      kind:"bad",
+    };
+  }
+  if(result.reason === "collision" || result.reason === "resource-conflict"){
+    return {
+      title:"Not solved",
+      observation:`Step ${step}: ${robots} tried to enter the same ${square}.`,
+      question:"Which visible difference should determine who waits?",
+      kind:"bad",
+    };
+  }
+  if(result.reason === "no-plan"){
+    return {
+      title:"No legal route",
+      observation:`${feedbackAgent(result.blockedAgent, frame)} cannot reach its target under the current rules.`,
+      question:"What distinguishes this required move from the move the rule should prevent?",
+      kind:"bad",
+    };
+  }
+  if(result.reason === "timeout"){
+    const waitingFrame = lastWaitingFrame(result);
+    const waitingIds = Object.entries(waitingFrame?.agents || {})
+      .filter(([, meta]) => meta.waiting)
+      .map(([id]) => id);
+    const waitingRobots = waitingIds.map(id => feedbackAgent(id, waitingFrame)).join(" and ");
+    return {
+      title:"No progress",
+      observation:`${waitingRobots || "The robots"} kept waiting until the scene stopped.`,
+      question:"Compare the moment the robot first waited with the later steps.",
+      kind:"bad",
+    };
+  }
+  if(result.reason === "machine-order"){
+    return {
+      title:"Not solved",
+      observation:`Step ${step}: ${robots} entered the machine before it was ready.`,
+      question:"Compare the order and roles of the robots approaching it.",
+      kind:"bad",
+    };
+  }
+  return {
+    title:"Not solved",
+    observation:reasonText(result.reason, result),
+    question:"Compare the failed move with a move that should remain allowed.",
+    kind:"bad",
+  };
+}
+
+function setRunFeedback(result){
+  const status = $("status");
+  const feedback = buildRunFeedback(result);
+  status.className = `status run-feedback ${feedback.kind}`;
+  status.replaceChildren();
+  const title = document.createElement("strong");
+  title.className = "feedback-title";
+  title.textContent = feedback.title;
+  const observation = document.createElement("span");
+  observation.textContent = feedback.observation;
+  const question = document.createElement("span");
+  question.className = "feedback-question";
+  question.textContent = feedback.question;
+  status.append(title, observation, question);
+  return feedback;
+}
+
 function closeNotice(){
   const backdrop = $("notice-backdrop");
   if(backdrop) backdrop.hidden = true;
@@ -1420,10 +1536,7 @@ function showFrameAt(index, updateStatus=true){
   renderFrame(lastFrames[frameIndex]);
   if(updateStatus){
     if(lastResult && frameIndex === lastFrames.length - 1){
-      setStatus(
-        lastResult.curriculumMessage || reasonText(lastResult.reason, lastResult),
-        lastResult.ok ? "ok" : "bad",
-      );
+      setRunFeedback(lastResult);
     }else{
       setStatus(`Step ${frameIndex}/${lastFrames.length - 1}`, "");
     }
@@ -1485,6 +1598,7 @@ function play(){
   lastFrames = result.frames || [];
   frameIndex = 0;
   const now = Date.now();
+  const feedback = buildRunFeedback(result);
   const record = {
     participant_id: null,
     experiment_version:RAW_LIBRARY.experiment_version || 2,
@@ -1501,6 +1615,8 @@ function play(){
     ok: result.ok,
     reason: result.reason,
     reason_text: reasonText(result.reason, result),
+    feedback_observation:feedback.observation,
+    feedback_question:feedback.question,
     curriculum_message:result.curriculumMessage || null,
     frames: result.frames,
     agent_report: result.frames.length ? result.frames[result.frames.length - 1].agents : {},
@@ -1525,10 +1641,7 @@ function play(){
     if(frameIndex >= lastFrames.length - 1){
       clearInterval(timer);
       timer = null;
-      setStatus(
-        result.curriculumMessage || reasonText(result.reason, result),
-        result.ok ? "ok" : "bad",
-      );
+      setRunFeedback(result);
     }
   }, 280);
 }
@@ -1620,7 +1733,7 @@ function exportJson(){
 }
 
 function exportCsv(){
-  const cols = ["shift_id","shift_label","shift_attempt_index","global_attempt_index","rulebook_revision","active_rule_ids","active_library_rule_ids","saved_library_rule_ids","ok","reason","rule_summary","time_from_trial_start_ms","time_from_experiment_start_ms","time_from_last_attempt_ms","timestamp"];
+  const cols = ["shift_id","shift_label","shift_attempt_index","global_attempt_index","rulebook_revision","active_rule_ids","active_library_rule_ids","saved_library_rule_ids","ok","reason","feedback_observation","feedback_question","rule_summary","time_from_trial_start_ms","time_from_experiment_start_ms","time_from_last_attempt_ms","timestamp"];
   const esc = v => '"' + String(v ?? "").replaceAll('"', '""') + '"';
   const rows = [cols.join(",")].concat(runs.map(r => cols.map(c => esc(r[c])).join(",")));
   download("norm-task-log.csv", "text/csv", rows.join("\n") + "\n");

@@ -286,15 +286,28 @@ function protectedPollution(world, agent, cell){
 }
 
 function snapshot(scn, pos, event, meta={}){
+  const visualPos = meta.visualPos || pos;
   const out = {};
-  Object.keys(pos).forEach(id => { out[id] = pos[id].slice(); });
+  Object.keys(pos).forEach(id => {
+    out[id] = (visualPos[id] || visualPos[String(id)] || pos[id]).slice();
+  });
   const plans = meta.plans || {};
   const ptr = meta.ptr || {};
   const blocked = meta.blocked || new Set();
   const released = meta.released || new Set();
   const intend = meta.intend || {};
   const failedAgent = meta.failedAgent === undefined ? null : String(meta.failedAgent);
-  const involved = eventAgentIds(event);
+  const failureEvent = new Set([
+    "no-plan",
+    "resource-conflict",
+    "collision",
+    "jam",
+    "machine-order",
+    "incident",
+    "pollution",
+    "timeout",
+  ]).has(event?.type);
+  const involved = failureEvent ? eventAgentIds(event) : new Set();
   const agents = {};
   scn.agents.forEach(agent => {
     const id = String(agent.id);
@@ -342,6 +355,7 @@ function simulate(scn, rules){
   const dynamicNorms = rules.filter(isDynamic);
   const agentsById = {}, pos = {}, plans = {}, ptr = {};
   const released = new Set();
+  const machineEntryCells = {};
   const preparedMachines = new Set();
   scn.agents.forEach(a => { agentsById[a.id] = a; pos[a.id] = a.pos.slice(); });
 
@@ -363,25 +377,54 @@ function simulate(scn, rules){
   const done = id => ptr[id] >= plans[id].length;
 
   for(let t=0; t<100; t++){
-    const releasedBefore = released.size;
     // Entering a station occupies it for one step. A robot that completes a
-    // machine target then leaves the workspace, releasing the station.
+    // machine target retreats to its entry square, then releases the station.
+    const newlyReleased = [];
     for(const agent of scn.agents){
-      if(done(agent.id) && agent.goal.kind === "operate"){
+      if(done(agent.id) && agent.goal.kind === "operate" && !released.has(agent.id)){
         const machine = world.machines[agent.goal.machine];
-        if(machine && sameCell(pos[agent.id], machine.cell)) released.add(agent.id);
+        if(machine && sameCell(pos[agent.id], machine.cell)) newlyReleased.push(agent);
       }
     }
+    if(newlyReleased.length){
+      const retreatPos = {};
+      Object.keys(pos).forEach(id => { retreatPos[id] = pos[id].slice(); });
+      newlyReleased.forEach(agent => {
+        retreatPos[agent.id] = (machineEntryCells[agent.id] || pos[agent.id]).slice();
+      });
+      frames.push(snapshot(scn, pos, {
+        type:"machine-retreat",
+        cell:world.machines[newlyReleased[0].goal.machine].cell,
+        agents:newlyReleased.map(agent => agent.id),
+      }, {
+        plans,
+        ptr,
+        released,
+        visualPos:retreatPos,
+        tick:t + 1,
+      }));
+      newlyReleased.forEach(agent => released.add(agent.id));
+      frames.push(snapshot(scn, pos, null, {
+        plans,
+        ptr,
+        released,
+        visualPos:retreatPos,
+        tick:t + 1,
+      }));
+    }
     if(scn.agents.every(a => done(a.id))){
-      if(released.size > releasedBefore){
-        frames.push(snapshot(scn, pos, null, {
-          plans,
-          ptr,
-          released,
-          tick:t + 1,
-        }));
-      }
       return { ok:true, reason:"ok", frames };
+    }
+
+    const previousPos = {};
+    Object.keys(pos).forEach(id => { previousPos[id] = pos[id].slice(); });
+
+    if(newlyReleased.length){
+      // Released agents no longer occupy their display square in the simulation.
+      newlyReleased.forEach(agent => {
+        const id = agent.id;
+        if(!machineEntryCells[id]) machineEntryCells[id] = previousPos[id].slice();
+      });
     }
 
     const intend = {};
@@ -500,6 +543,9 @@ function simulate(scn, rules){
       if(step.kind === "move"){
         if(sameCell(pos[id], step.cell)){
           const machine = Object.values(world.machines).find(row => sameCell(row.cell, pos[id]));
+          if(machine && agent.goal.kind === "operate" && !machineEntryCells[id]){
+            machineEntryCells[id] = previousPos[id].slice();
+          }
           if(machine?.needs_permit && !agent.tokens.includes("permit")){
             return {
               ok:false,

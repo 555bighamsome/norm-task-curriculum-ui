@@ -6,7 +6,7 @@
     "Every scene uses a 10 by 10 warehouse and the same rule language. Walls shape which routes are available.",
     "Robots choose the shortest legal route. If routes are equally short, they choose the one with fewer turns.",
     "If multiple robots enter the same square in the same step, they collide.",
-    "A robot that reaches a floor target stops there. A robot that finishes at a machine leaves the station after that step.",
+    "A robot that reaches a floor target stops there. A robot that finishes at a machine returns to the square it entered from.",
     "A target square is being entered by multiple robots when at least two robots currently intend to enter it.",
     "Carrying a spill into cold storage can contaminate the shared area. A cleaner can enter with a spill without causing contamination.",
     "A machine is used by entering its square. Only one robot can enter it per step.",

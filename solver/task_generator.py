@@ -215,7 +215,7 @@ def make_library(*, include_solver=True, include_prefixes=False):
             ),
             (
                 "A robot that reaches a floor target stops there. A robot that "
-                "finishes at a machine leaves the station after that step."
+                "finishes at a machine returns to the square it entered from."
             ),
             (
                 "A target square is being entered by multiple robots when at "
