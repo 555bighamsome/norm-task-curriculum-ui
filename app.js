@@ -228,19 +228,13 @@ const SCENE_GUIDES = {
 const GUIDE_COPY = {
   cold:"A spill contaminates this square.",
   machine:"Enter to use it; one robot per step, then it retreats.",
-  target:"Matches the robot with the same number.",
-  spill:"This robot is carrying a spill.",
-  carrier:"Carries cargo to its target.",
   operator:"Prepares a setup machine before a Carrier uses it.",
   cleaner:"Can carry a spill into cold storage without contamination.",
-  floor:"Robots can enter this square.",
 };
 
 function sceneFeatureItems(task){
   const roles = new Set(task.agents.filter(agent => agent.active).map(agent => agent.role));
   const hasCold = Object.values(task.zones).includes("cold");
-  const hasSpill = task.agents.some(agent => agent.active && agent.carrying === "spill") ||
-    Object.values(task.items).some(item => item.hazardous);
   const specs = [
     {
       id:"cold",
@@ -255,29 +249,6 @@ function sceneFeatureItems(task){
       iconName:"machine",
       title:"Machine",
       detail:GUIDE_COPY.machine,
-    },
-    {
-      id:"target",
-      present:task.agents.some(agent => agent.active),
-      iconName:"target",
-      title:"Dashed numbered square",
-      detail:GUIDE_COPY.target,
-      target:true,
-    },
-    {
-      id:"spill",
-      present:hasSpill,
-      iconName:"spill",
-      title:"Spill",
-      detail:GUIDE_COPY.spill,
-    },
-    {
-      id:"carrier",
-      present:roles.has("carrier"),
-      iconName:"carrier",
-      role:"carrier",
-      title:"Carrier",
-      detail:GUIDE_COPY.carrier,
     },
     {
       id:"operator",
@@ -1282,7 +1253,7 @@ function renderLegend(){
     return legendTile(
       symbol,
       ROLE_ZH[role] || role,
-      GUIDE_COPY[role] || "Robot role.",
+      GUIDE_COPY[role] || "",
       "role-tile",
     );
   }).join("");
@@ -1290,18 +1261,18 @@ function renderLegend(){
   const targetTile = legendTile(
     '<span class="legend-target-sample" style="--agent-color:#555"><span>0</span></span>',
     "Target",
-    GUIDE_COPY.target,
+    "",
     "target-tile",
   );
   const zoneSet = new Set(Object.values(scn.zones));
   const hasSpill = activeAgents.some(agent => agent.carrying === "spill") ||
     Object.values(scn.items).some(item => item.hazardous);
   const environmentTiles = [
-    legendTile(legendIcon("floor", "floor-sample"), "Open floor", GUIDE_COPY.floor, "floor-tile"),
+    legendTile(legendIcon("floor", "floor-sample"), "Open floor", "", "floor-tile"),
     scn.walls.size ? legendTile(legendIcon("wall", "wall-sample"), "Wall", "", "wall-tile") : "",
     zoneSet.has("cold") ? legendTile(legendIcon("cold", "cold-sample"), "Cold storage", GUIDE_COPY.cold, "zone-tile cold") : "",
     Object.keys(scn.machines).length ? legendTile(legendIcon("machine", "machine-sample"), "Machine", GUIDE_COPY.machine, "machine-tile") : "",
-    hasSpill ? legendTile(legendIcon("spill", "spill-sample"), "Spill", GUIDE_COPY.spill, "item-tile") : "",
+    hasSpill ? legendTile(legendIcon("spill", "spill-sample"), "Spill", "", "item-tile") : "",
   ].filter(Boolean).join("");
 
   $("legend").innerHTML = `<section class="map-key" aria-labelledby="map-key-title"><h3 class="map-key-title" id="map-key-title">Map key &amp; guide</h3><div class="map-key-body">${[
