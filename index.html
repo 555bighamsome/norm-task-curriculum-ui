@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shared Rulebook</title>
+<link rel="stylesheet" href="styles.css?v=ui-v13-curriculum-1">
+</head>
+<body>
+<div class="wrap">
+  <header class="site-header">
+    <div class="brand-block">
+      <div class="eyebrow">SHARED RULEBOOK</div>
+      <h1>Build shared rules scene by scene</h1>
+      <p class="sub">Solve a sequence from simple to difficult. Save rules you want to reuse.</p>
+    </div>
+    <div class="header-tools">
+      <span class="course-progress" id="course-progress">0 / 10 checked</span>
+    </div>
+  </header>
+
+  <div class="taskbar">
+    <div class="taskbar-head">
+      <div class="taskbar-label">Scenes</div>
+      <div class="case-summary" id="case-summary"></div>
+    </div>
+    <div class="tabs" id="tabs"></div>
+  </div>
+
+  <div class="main">
+    <section class="scene-panel" aria-label="Current scene">
+      <div class="section-heading scene-heading">
+        <div>
+          <h2>Current scene <span class="scene-label" id="scene-label"></span></h2>
+          <p>Run this map to test the rules for this scene.</p>
+        </div>
+        <div class="scene-heading-actions">
+          <button class="guide-button" id="scene-guide" type="button" hidden>Guide</button>
+          <div class="controls scene-run-controls">
+            <button class="btn primary" id="run">Run current scene</button>
+            <div class="step-nav" aria-label="Animation step controls">
+              <button class="btn step-button" id="prev" aria-label="Previous step" title="Previous step">←</button>
+              <span class="step-label" id="step-label">Step 0 / 0</span>
+              <button class="btn step-button" id="next" aria-label="Next step" title="Next step">→</button>
+            </div>
+            <button class="btn text-button" id="reset">Reset</button>
+          </div>
+        </div>
+      </div>
+      <div class="scene-goal" id="scene-goal" aria-labelledby="scene-goal-title">
+        <div class="scene-goal-heading">
+          <strong id="scene-goal-title">Goals</strong>
+        </div>
+        <p class="scene-goal-description" id="scene-goal-description"></p>
+        <div class="scene-goal-list" id="scene-goal-list"></div>
+      </div>
+      <div class="scene-visual">
+        <div class="board-frame">
+          <div class="board" id="board"></div>
+        </div>
+        <section class="legend" id="legend" aria-label="Scene key"></section>
+      </div>
+      <div class="status" id="status"></div>
+      <div class="agent-panel" id="agent-progress"></div>
+    </section>
+
+    <section class="rules-panel" aria-labelledby="rules-panel-title">
+      <section class="guide-summary" id="guide-summary" aria-labelledby="guide-summary-title" hidden>
+        <div class="guide-summary-heading">
+          <strong id="guide-summary-title">Guide</strong>
+          <span>Known elements</span>
+        </div>
+        <div class="guide-summary-items" id="guide-summary-items"></div>
+      </section>
+      <div class="section-heading rules-heading">
+        <div>
+          <h2 id="rules-panel-title">Rules for this scene</h2>
+          <p>Every rule here applies to every robot in this scene.</p>
+        </div>
+        <span class="rule-count" id="rule-count">0 rules</span>
+      </div>
+      <div class="rulebook-actions">
+        <button class="btn add-rule-button" id="addrule">Add Rule</button>
+      </div>
+      <div id="rules"></div>
+      <section class="library-panel" aria-labelledby="library-title">
+        <div class="library-heading">
+          <div>
+            <h3 id="library-title">Saved rule library</h3>
+          </div>
+          <span class="rule-count" id="library-count">0 saved</span>
+        </div>
+        <div id="library"></div>
+      </section>
+      <div class="researcher-panel" id="researcher-panel" hidden>
+        <p class="vocab" id="vocab"></p>
+        <div class="log" id="log"></div>
+        <div class="controls export-controls">
+          <button class="btn" id="export-json">Export JSON</button>
+          <button class="btn" id="export-csv">Export CSV</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<div class="scene-picker-backdrop" id="scene-picker-backdrop" hidden>
+  <section class="scene-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="scene-picker-title">
+    <div class="guide-kicker">Start anywhere</div>
+    <h2 id="scene-picker-title">Choose a map</h2>
+    <p>Choose a map to inspect. The recommended curriculum proceeds from simple to difficult.</p>
+    <div class="scene-picker-key" id="scene-picker-key"></div>
+    <div class="scene-picker-options" id="scene-picker-options"></div>
+  </section>
+</div>
+
+<div class="guide-backdrop" id="guide-backdrop" hidden>
+  <section class="guide-dialog" role="dialog" aria-modal="true" aria-labelledby="guide-title">
+    <div class="guide-kicker" id="guide-kicker">Scene guide</div>
+    <h2 id="guide-title"></h2>
+    <div class="guide-items" id="guide-items"></div>
+    <p id="guide-body"></p>
+    <div class="guide-example" id="guide-example"></div>
+    <button class="btn primary guide-close" id="guide-close" type="button">Continue to scene</button>
+  </section>
+</div>
+
+<div class="notice-backdrop" id="notice-backdrop" hidden>
+  <section class="notice-dialog" role="dialog" aria-modal="true" aria-labelledby="notice-title">
+    <h2 id="notice-title">Rule not ready</h2>
+    <p id="notice-message"></p>
+    <button class="btn primary notice-close" id="notice-close" type="button">OK</button>
+  </section>
+</div>
+
+<script src="data/tasks.generated.js?v=ui-v13-curriculum-1"></script>
+<script src="engine.js?v=ui-v13-curriculum-1"></script>
+<script src="app.js?v=ui-v13-curriculum-1"></script>
+</body>
+</html>

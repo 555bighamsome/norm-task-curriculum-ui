@@ -1,0 +1,9 @@
+prefix_length,shifts_seen,active_robot_count,minimum_rule_count,minimum_mdl,minimum_solution_count,systems_enumerated,identifying_evidence
+1,shift_1,1,1,1,1,5670,broad cold-storage protection
+2,shift_1 shift_2,2,1,2,3,5670,cargo refinement remains confounded with local direction shortcuts
+3,shift_1 shift_2 shift_3,2,1,2,1,5670,mirrored direction evidence identifies cold plus spill
+4,shift_1 shift_2 shift_3 shift_4,2,1,3,2,5670,carrier patch and not-cleaner exception are both viable
+5,shift_1 shift_2 shift_3 shift_4 shift_5,2,1,3,1,5670,operator counterexample identifies the not-cleaner compression
+6,shift_1 shift_2 shift_3 shift_4 shift_5 shift_6,2,2,5,4,228376,ordinary conflict adds a relational direction convention
+7,shift_1 shift_2 shift_3 shift_4 shift_5 shift_6 shift_7,2,2,5,4,228376,machine conflict permits structural reuse of the same convention
+8,shift_1 shift_2 shift_3 shift_4 shift_5 shift_6 shift_7 shift_8,4,2,5,2,228376,coupled shift retains only the two symmetric yielding conventions
