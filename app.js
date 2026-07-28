@@ -1030,32 +1030,7 @@ function conditionPayload(cond){
   };
 }
 
-function conditionSetIsValid(conditions){
-  const exact = new Map();
-  for(const condition of conditions){
-    const key = `${condition.p}|${String(condition.v)}`;
-    if(exact.has(key)) return false;
-    exact.set(key, !!condition.negated);
-  }
-
-  for(const predicate of ["target_type", "role", "move_dir"]){
-    const rows = conditions.filter(condition => condition.p === predicate);
-    if(rows.filter(condition => !condition.negated).length > 1) return false;
-  }
-
-  for(const predicate of ["role", "move_dir"]){
-    const property = RULE_SCHEMA
-      .flatMap(object => object.properties)
-      .find(candidate => candidate.predicate === predicate);
-    const excluded = new Set(conditions
-      .filter(condition => condition.p === predicate && condition.negated)
-      .map(condition => String(condition.v)));
-    if(property && excluded.size >= property.values.length) return false;
-  }
-  return true;
-}
-
-function conditionTerms(object, existingConditions, operator){
+function conditionTerms(object){
   if(!object) return [];
   return object.properties.flatMap(property =>
     property.values.map(value => ({
@@ -1065,14 +1040,7 @@ function conditionTerms(object, existingConditions, operator){
       predicate:property.predicate,
       value:value.id,
     }))
-  ).filter(option => conditionSetIsValid([
-    ...existingConditions,
-    {
-      p:option.predicate,
-      v:option.value,
-      negated:operator === "IS_NOT",
-    },
-  ]));
+  );
 }
 
 function termPlaceholder(objectId){
@@ -1100,12 +1068,7 @@ function renderConditionEditor(rule, card){
 
   const object = schemaObject(editor.object);
   const property = schemaProperty(editor.object, editor.property);
-  const existingConditions = rule.conds
-    .filter((_, index) => index !== editor.conditionIndex);
-  const availableObjects = RULE_SCHEMA.filter(candidate =>
-    candidate.id === editor.object ||
-    conditionTerms(candidate, existingConditions, editor.operator).length > 0
-  );
+  const availableObjects = RULE_SCHEMA;
 
   const objectSelect = editorSelect(
     "typed-select object-select",
@@ -1141,7 +1104,7 @@ function renderConditionEditor(rule, card){
   operatorSelect.setAttribute("aria-label", "Condition relation");
   panel.appendChild(operatorSelect);
 
-  const terms = conditionTerms(object, existingConditions, editor.operator);
+  const terms = conditionTerms(object);
   const selectedTerm = editor.property === null
     ? null
     : `${editor.property}|${String(editor.value)}`;
