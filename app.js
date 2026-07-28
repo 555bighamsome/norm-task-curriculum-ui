@@ -35,11 +35,9 @@ const ORDER_MODE = DEBUG_UI ? "free" : (URL_PARAMS.get("order") || "curriculum")
 const FREE_ORDER = ORDER_MODE === "free";
 
 function taskUnlocked(task){
-  if(FREE_ORDER) return true;
-  const index = TASKS.indexOf(task);
-  if(index <= 0) return true;
-  const previous = TASKS[index - 1];
-  return shiftStates[previous.id]?.lastOk === true;
+  // Keep every scene available during pilot testing. Participants can choose
+  // any map, while each scene still records its own result independently.
+  return true;
 }
 
 function unlockedTasks(){
