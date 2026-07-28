@@ -218,10 +218,10 @@ const SCENE_GUIDES = {
     title:"New map element",
   },
   trial_3: {
-    title:"Shared machines",
+    title:"New map element",
   },
   trial_5: {
-    title:"Cleaner robots",
+    title:"New map element",
   },
 };
 
