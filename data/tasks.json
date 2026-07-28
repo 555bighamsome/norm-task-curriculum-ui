@@ -1203,7 +1203,7 @@
     "behavioral_signature_count": 8,
     "systems_enumerated": 7589,
     "systems_simulated": 7589,
-    "shift_simulations": 37207,
+    "shift_simulations": 37032,
     "tested_by_rule_count": {
       "0": 1,
       "1": 5669,
@@ -1524,45 +1524,9 @@
       },
       {
         "shift_id": "trial_6",
-        "single_rule_count": 240,
+        "single_rule_count": 48,
         "minimum_single_rule_mdl": 2,
         "minimum_single_rule_examples": [
-          {
-            "action": "MOVE",
-            "conditions": [
-              {
-                "predicate": "contested",
-                "value": true,
-                "negated": false
-              },
-              {
-                "predicate": "move_dir",
-                "value": "E",
-                "negated": true
-              }
-            ],
-            "mdl": 2,
-            "text": "FORBID MOVE WHEN [contested=True & move_dir!=E]",
-            "classification": "cross-context direction convention"
-          },
-          {
-            "action": "MOVE",
-            "conditions": [
-              {
-                "predicate": "contested",
-                "value": true,
-                "negated": false
-              },
-              {
-                "predicate": "move_dir",
-                "value": "S",
-                "negated": false
-              }
-            ],
-            "mdl": 2,
-            "text": "FORBID MOVE WHEN [contested=True & move_dir=S]",
-            "classification": "cross-context direction convention"
-          },
           {
             "action": "MOVE",
             "conditions": [
@@ -1591,30 +1555,12 @@
               },
               {
                 "predicate": "role",
-                "value": "carrier",
+                "value": "operator",
                 "negated": true
               }
             ],
             "mdl": 2,
-            "text": "FORBID MOVE WHEN [contested=True & role!=carrier]",
-            "classification": "cross-context role priority"
-          },
-          {
-            "action": "MOVE",
-            "conditions": [
-              {
-                "predicate": "contested",
-                "value": true,
-                "negated": false
-              },
-              {
-                "predicate": "role",
-                "value": "operator",
-                "negated": false
-              }
-            ],
-            "mdl": 2,
-            "text": "FORBID MOVE WHEN [contested=True & role=operator]",
+            "text": "FORBID MOVE WHEN [contested=True & role!=operator]",
             "classification": "cross-context role priority"
           }
         ]
@@ -4211,7 +4157,7 @@
       ],
       "family": "shared_rulebook_curriculum",
       "active_agent_count": 3,
-      "description": "Three robots use a narrow warehouse route. A carrier and an operator meet at the first junction, and the operator later meets a cleaner at another junction. Find a shared rule that lets all three reach their targets.",
+      "description": "A carrier and an operator meet at one junction. The operator later meets a cleaner at another junction. Find a shared rule that lets all three reach their targets.",
       "participant_prompt": "Run the scene, inspect what goes wrong, and decide whether the shared rulebook should be added to or refined.",
       "analysis": {
         "layer": 3,
@@ -4221,10 +4167,10 @@
         "stage": "Sequential role-priority reuse",
         "evidence_function": "Two local conflicts have different locations and different pairs of roles, but share one priority structure. The operator has priority at both junctions; carrier and cleaner yield.",
         "expected_transition": "specific role rules -> one reusable non-operator priority rule",
-        "selected_variant": "wall_forced_sequential_priority",
+        "selected_variant": "standard_facility_sequential_priority",
         "nuisance_score": [
           2,
-          15
+          19
         ],
         "active_agent_count": 3,
         "contract_satisfied": true,
@@ -4267,45 +4213,9 @@
         },
         "shortcut_audit": {
           "shift_id": "trial_6",
-          "single_rule_count": 240,
+          "single_rule_count": 48,
           "minimum_single_rule_mdl": 2,
           "minimum_single_rule_examples": [
-            {
-              "action": "MOVE",
-              "conditions": [
-                {
-                  "predicate": "contested",
-                  "value": true,
-                  "negated": false
-                },
-                {
-                  "predicate": "move_dir",
-                  "value": "E",
-                  "negated": true
-                }
-              ],
-              "mdl": 2,
-              "text": "FORBID MOVE WHEN [contested=True & move_dir!=E]",
-              "classification": "cross-context direction convention"
-            },
-            {
-              "action": "MOVE",
-              "conditions": [
-                {
-                  "predicate": "contested",
-                  "value": true,
-                  "negated": false
-                },
-                {
-                  "predicate": "move_dir",
-                  "value": "S",
-                  "negated": false
-                }
-              ],
-              "mdl": 2,
-              "text": "FORBID MOVE WHEN [contested=True & move_dir=S]",
-              "classification": "cross-context direction convention"
-            },
             {
               "action": "MOVE",
               "conditions": [
@@ -4334,30 +4244,12 @@
                 },
                 {
                   "predicate": "role",
-                  "value": "carrier",
+                  "value": "operator",
                   "negated": true
                 }
               ],
               "mdl": 2,
-              "text": "FORBID MOVE WHEN [contested=True & role!=carrier]",
-              "classification": "cross-context role priority"
-            },
-            {
-              "action": "MOVE",
-              "conditions": [
-                {
-                  "predicate": "contested",
-                  "value": true,
-                  "negated": false
-                },
-                {
-                  "predicate": "role",
-                  "value": "operator",
-                  "negated": false
-                }
-              ],
-              "mdl": 2,
-              "text": "FORBID MOVE WHEN [contested=True & role=operator]",
+              "text": "FORBID MOVE WHEN [contested=True & role!=operator]",
               "classification": "cross-context role priority"
             }
           ]
@@ -4367,7 +4259,7 @@
           "hypothesis_space": "all canonical MOVE rules up to eight conditions",
           "candidate_rule_count": 5669,
           "single_rule_systems_tested": 5669,
-          "single_rule_solution_count": 240,
+          "single_rule_solution_count": 48,
           "lower_mdl_single_solution_count": 0,
           "two_rule_systems_tested_below_reference_mdl": 0,
           "two_rule_solution_count_below_reference_mdl": 0,
@@ -4399,7 +4291,7 @@
         }
       },
       "world": {
-        "name": "wall_forced_sequential_priority",
+        "name": "standard_facility_sequential_priority",
         "rows": 10,
         "cols": 10,
         "walls": [
@@ -4449,19 +4341,11 @@
           ],
           [
             1,
-            1
-          ],
-          [
-            1,
             2
           ],
           [
             1,
             3
-          ],
-          [
-            1,
-            4
           ],
           [
             1,
@@ -4477,10 +4361,6 @@
           ],
           [
             1,
-            8
-          ],
-          [
-            1,
             9
           ],
           [
@@ -4489,55 +4369,19 @@
           ],
           [
             2,
-            1
+            9
           ],
           [
-            2,
+            3,
+            0
+          ],
+          [
+            3,
             2
           ],
           [
-            2,
+            3,
             3
-          ],
-          [
-            2,
-            4
-          ],
-          [
-            2,
-            5
-          ],
-          [
-            2,
-            6
-          ],
-          [
-            2,
-            7
-          ],
-          [
-            2,
-            8
-          ],
-          [
-            2,
-            9
-          ],
-          [
-            3,
-            0
-          ],
-          [
-            3,
-            1
-          ],
-          [
-            3,
-            2
-          ],
-          [
-            3,
-            4
           ],
           [
             3,
@@ -4553,15 +4397,27 @@
           ],
           [
             3,
-            8
-          ],
-          [
-            3,
             9
           ],
           [
             4,
             0
+          ],
+          [
+            4,
+            2
+          ],
+          [
+            4,
+            3
+          ],
+          [
+            4,
+            5
+          ],
+          [
+            4,
+            6
           ],
           [
             4,
@@ -4569,10 +4425,6 @@
           ],
           [
             4,
-            8
-          ],
-          [
-            4,
             9
           ],
           [
@@ -4581,27 +4433,11 @@
           ],
           [
             5,
-            1
-          ],
-          [
-            5,
-            2
-          ],
-          [
-            5,
-            4
-          ],
-          [
-            5,
             9
           ],
           [
             6,
             0
-          ],
-          [
-            6,
-            1
           ],
           [
             6,
@@ -4613,19 +4449,15 @@
           ],
           [
             6,
-            4
-          ],
-          [
-            6,
             5
           ],
           [
             6,
-            7
+            6
           ],
           [
             6,
-            8
+            7
           ],
           [
             6,
@@ -4637,10 +4469,6 @@
           ],
           [
             7,
-            1
-          ],
-          [
-            7,
             2
           ],
           [
@@ -4649,19 +4477,15 @@
           ],
           [
             7,
-            4
-          ],
-          [
-            7,
             5
           ],
           [
             7,
-            7
+            6
           ],
           [
             7,
-            8
+            7
           ],
           [
             7,
@@ -4670,26 +4494,6 @@
           [
             8,
             0
-          ],
-          [
-            8,
-            1
-          ],
-          [
-            8,
-            2
-          ],
-          [
-            8,
-            3
-          ],
-          [
-            8,
-            4
-          ],
-          [
-            8,
-            5
           ],
           [
             8,
@@ -4747,8 +4551,8 @@
           {
             "id": 0,
             "start": [
-              4,
-              2
+              2,
+              3
             ],
             "role": "carrier",
             "carrying": "none",
@@ -4757,16 +4561,16 @@
             "goal": {
               "kind": "reach",
               "target": [
-                5,
-                3
+                2,
+                4
               ]
             }
           },
           {
             "id": 1,
             "start": [
-              3,
-              3
+              1,
+              4
             ],
             "role": "operator",
             "carrying": "none",
@@ -4775,7 +4579,7 @@
             "goal": {
               "kind": "reach",
               "target": [
-                5,
+                8,
                 8
               ]
             }
@@ -4783,7 +4587,7 @@
           {
             "id": 2,
             "start": [
-              8,
+              5,
               8
             ],
             "role": "cleaner",
@@ -4793,8 +4597,8 @@
             "goal": {
               "kind": "reach",
               "target": [
-                5,
-                5
+                8,
+                4
               ]
             }
           }
@@ -4810,15 +4614,15 @@
           {
             "pos": {
               "0": [
-                4,
-                2
-              ],
-              "1": [
-                3,
+                2,
                 3
               ],
+              "1": [
+                1,
+                4
+              ],
               "2": [
-                8,
+                5,
                 8
               ]
             },
@@ -4834,15 +4638,15 @@
           {
             "pos": {
               "0": [
-                4,
-                2
-              ],
-              "1": [
-                3,
+                2,
                 3
               ],
+              "1": [
+                1,
+                4
+              ],
               "2": [
-                8,
+                5,
                 8
               ]
             },
@@ -4856,8 +4660,8 @@
             "event": {
               "type": "collision",
               "cell": [
-                4,
-                3
+                2,
+                4
               ],
               "agents": [
                 0,

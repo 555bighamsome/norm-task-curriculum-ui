@@ -474,49 +474,24 @@ def combined_road_machine_reuse_variants():
 
 
 def sequential_pairwise_variants():
-    """Walls create two sequential, role-based conflicts.
+    """The standard warehouse layout creates two sequential role conflicts.
 
-    Carrier and operator meet at the first junction.  The operator then uses
-    the narrow passage and meets the cleaner at a second junction.  The
-    carrier exits after the first junction, so no step contains a three-way
-    contest or a carrier/cleaner contest.
+    Carrier and operator first meet at the upper central junction. After the
+    carrier yields, the operator continues down the central corridor and meets
+    the cleaner at the middle junction. No step contains a three-way contest
+    or a carrier/cleaner contest.
     """
-    open_cells = {
-        # Main passage and first junction.
-        *( (4, col) for col in range(1, 7) ),
-        # Operator approaches the first junction from the north.
-        (3, 3),
-        # Carrier exits below the first junction.
-        (5, 3),
-        # The operator turns south at the end of the narrow passage.
-        (5, 5),
-        (5, 6),
-        (5, 7),
-        (5, 8),
-        # Cleaner approaches the second junction from the south by a longer
-        # feeder route, then leaves west toward its own target.
-        (6, 6),
-        (7, 6),
-        (8, 6),
-        (8, 7),
-        (8, 8),
-    }
-    walls = {
-        (row, col)
-        for row in range(ROWS)
-        for col in range(COLS)
-        if (row, col) not in open_cells
-    }
     return [
         make_world(
-            "wall_forced_sequential_priority",
+            "standard_facility_sequential_priority",
             [
-                change(0, (4, 2), (5, 3), role="carrier"),
-                change(1, (3, 3), (5, 8), role="operator"),
-                change(2, (8, 8), (5, 5), role="cleaner"),
+                # First conflict at (2, 4).
+                change(0, (2, 3), (2, 4), role="carrier"),
+                # The operator continues to the second conflict at (5, 4).
+                change(1, (1, 4), (8, 8), role="operator"),
+                change(2, (5, 8), (8, 4), role="cleaner"),
             ],
             zones={},
-            walls=walls,
         )
     ]
 
@@ -794,10 +769,9 @@ SHIFT_BLUEPRINTS = (
         "id": "trial_6",
         "participant_label": "T6",
         "participant_description": (
-            "Three robots use a narrow warehouse route. A carrier and an "
-            "operator meet at the first junction, and the operator later meets "
-            "a cleaner at another junction. Find a shared rule that lets all "
-            "three reach their targets."
+            "A carrier and an operator meet at one junction. The operator later "
+            "meets a cleaner at another junction. Find a shared rule that lets "
+            "all three reach their targets."
         ),
         "layer": 3,
         "prerequisites": ("trial_2",),
