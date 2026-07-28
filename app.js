@@ -380,7 +380,7 @@ function renderScenePickerKey(){
     return `<div class="picker-key-tile">${roleLegendAvatar(role, "picker-key-symbol role-symbol")}<span>${ROLE_ZH[role] || role}</span></div>`;
   }).join("");
   const environmentTiles = [
-    ["floor", "Open floor"],
+    ["floor", "Available square"],
     ["wall", "Wall"],
     ["cold", "Cold storage"],
     ["machine", "Machine"],
@@ -1268,7 +1268,7 @@ function renderLegend(){
   const hasSpill = activeAgents.some(agent => agent.carrying === "spill") ||
     Object.values(scn.items).some(item => item.hazardous);
   const environmentTiles = [
-    legendTile(legendIcon("floor", "floor-sample"), "Open floor", "", "floor-tile"),
+    legendTile(legendIcon("floor", "floor-sample"), "Available square", "", "floor-tile"),
     scn.walls.size ? legendTile(legendIcon("wall", "wall-sample"), "Wall", "", "wall-tile") : "",
     zoneSet.has("cold") ? legendTile(legendIcon("cold", "cold-sample"), "Cold storage", GUIDE_COPY.cold, "zone-tile cold") : "",
     Object.keys(scn.machines).length ? legendTile(legendIcon("machine", "machine-sample"), "Machine", GUIDE_COPY.machine, "machine-tile") : "",
@@ -1350,7 +1350,7 @@ function feedbackCellType(cell){
     return "machine square";
   }
   if(scn.zones[K(cell[0], cell[1])] === "cold") return "cold-storage square";
-  return "open-floor square";
+  return "available square";
 }
 
 function feedbackAgent(id, frame){
