@@ -606,6 +606,7 @@ function buildBoard(){
   board.style.height = (scn.rows * CELL) + "px";
 
   for(let r=0; r<scn.rows; r++) for(let c=0; c<scn.cols; c++){
+    const key = K(r,c);
     const blocked = !passable(scn, [r,c]);
     const zone = zoneOf(scn, [r,c]);
     const visualZone = zone === "intersection" ? "normal" : zone;
@@ -617,7 +618,7 @@ function buildBoard(){
     cell.style.top = (r * CELL) + "px";
     cell.style.width = (blocked ? CELL : CELL - 4) + "px";
     cell.style.height = (blocked ? CELL : CELL - 4) + "px";
-    cell.dataset.cell = K(r,c);
+    cell.dataset.cell = key;
     cell.setAttribute("aria-label", blocked ? "Wall" : (ZONE_ZH[visualZone] || visualZone));
     if(!blocked){
       cell.innerHTML = zoneMarkup(visualZone) + oneWayArrowMarkup(scn.oneWay[key]);
