@@ -1,7 +1,7 @@
 window.TASK_LIBRARY = {
   "experiment_version": 7,
   "title": "Shared Rulebook",
-  "objective": "Solve a sequence of scenes by building and refining rules, then save useful rules for reuse in later scenes.",
+  "objective": "Build one compact set of shared rules that lets every scene finish without contamination, collision, or incorrect machine access.",
   "world_rules": [
     "Every scene uses a 10 by 10 warehouse and the same rule language. Walls shape which routes are available.",
     "Robots choose the shortest legal route. If routes are equally short, they choose the one with fewer turns.",
@@ -10,7 +10,8 @@ window.TASK_LIBRARY = {
     "A target square is being entered by multiple robots when at least two robots currently intend to enter it.",
     "Carrying a spill into cold storage can contaminate the shared area. A cleaner can enter with a spill without causing contamination.",
     "A machine is used by entering its square. Only one robot can enter it per step.",
-    "At setup machines, an operator must enter first to prepare the station; a carrier can enter after the operator releases it."
+    "At setup machines, an operator must enter first to prepare the station; a carrier can enter after the operator releases it.",
+    "The same shared rulebook applies to every scene."
   ],
   "rule_schema": {
     "action": {
@@ -777,26 +778,300 @@ window.TASK_LIBRARY = {
             ]
           ]
         ]
+      },
+      {
+        "k": 3,
+        "mdl": 9,
+        "rules": [
+          {
+            "action": "MOVE",
+            "conditions": [
+              {
+                "predicate": "target_type",
+                "value": "cold",
+                "negated": false
+              },
+              {
+                "predicate": "role",
+                "value": "cleaner",
+                "negated": true
+              },
+              {
+                "predicate": "carrying",
+                "value": "spill",
+                "negated": false
+              }
+            ],
+            "mdl": 3,
+            "text": "FORBID MOVE WHEN [target_type=cold & role!=cleaner & carrying=spill]",
+            "classification": "protective norm with cleaner exception"
+          },
+          {
+            "action": "MOVE",
+            "conditions": [
+              {
+                "predicate": "target_type",
+                "value": "machine",
+                "negated": true
+              },
+              {
+                "predicate": "contested",
+                "value": true,
+                "negated": false
+              },
+              {
+                "predicate": "move_dir",
+                "value": "S",
+                "negated": true
+              }
+            ],
+            "mdl": 3,
+            "text": "FORBID MOVE WHEN [target_type!=machine & contested=True & move_dir!=S]",
+            "classification": "road-scoped direction convention"
+          },
+          {
+            "action": "MOVE",
+            "conditions": [
+              {
+                "predicate": "target_type",
+                "value": "machine",
+                "negated": false
+              },
+              {
+                "predicate": "contested",
+                "value": true,
+                "negated": false
+              },
+              {
+                "predicate": "role",
+                "value": "carrier",
+                "negated": false
+              }
+            ],
+            "mdl": 3,
+            "text": "FORBID MOVE WHEN [target_type=machine & contested=True & role=carrier]",
+            "classification": "contested machine priority"
+          }
+        ],
+        "key": [
+          [
+            "MOVE",
+            [
+              [
+                "carrying",
+                "spill",
+                false
+              ],
+              [
+                "role",
+                "cleaner",
+                true
+              ],
+              [
+                "target_type",
+                "cold",
+                false
+              ]
+            ]
+          ],
+          [
+            "MOVE",
+            [
+              [
+                "contested",
+                "True",
+                false
+              ],
+              [
+                "move_dir",
+                "S",
+                true
+              ],
+              [
+                "target_type",
+                "machine",
+                true
+              ]
+            ]
+          ],
+          [
+            "MOVE",
+            [
+              [
+                "contested",
+                "True",
+                false
+              ],
+              [
+                "role",
+                "carrier",
+                false
+              ],
+              [
+                "target_type",
+                "machine",
+                false
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "k": 3,
+        "mdl": 9,
+        "rules": [
+          {
+            "action": "MOVE",
+            "conditions": [
+              {
+                "predicate": "target_type",
+                "value": "cold",
+                "negated": false
+              },
+              {
+                "predicate": "role",
+                "value": "cleaner",
+                "negated": true
+              },
+              {
+                "predicate": "carrying",
+                "value": "spill",
+                "negated": false
+              }
+            ],
+            "mdl": 3,
+            "text": "FORBID MOVE WHEN [target_type=cold & role!=cleaner & carrying=spill]",
+            "classification": "protective norm with cleaner exception"
+          },
+          {
+            "action": "MOVE",
+            "conditions": [
+              {
+                "predicate": "target_type",
+                "value": "machine",
+                "negated": true
+              },
+              {
+                "predicate": "contested",
+                "value": true,
+                "negated": false
+              },
+              {
+                "predicate": "move_dir",
+                "value": "S",
+                "negated": true
+              }
+            ],
+            "mdl": 3,
+            "text": "FORBID MOVE WHEN [target_type!=machine & contested=True & move_dir!=S]",
+            "classification": "road-scoped direction convention"
+          },
+          {
+            "action": "MOVE",
+            "conditions": [
+              {
+                "predicate": "target_type",
+                "value": "machine",
+                "negated": false
+              },
+              {
+                "predicate": "contested",
+                "value": true,
+                "negated": false
+              },
+              {
+                "predicate": "role",
+                "value": "operator",
+                "negated": true
+              }
+            ],
+            "mdl": 3,
+            "text": "FORBID MOVE WHEN [target_type=machine & contested=True & role!=operator]",
+            "classification": "contested machine priority"
+          }
+        ],
+        "key": [
+          [
+            "MOVE",
+            [
+              [
+                "carrying",
+                "spill",
+                false
+              ],
+              [
+                "role",
+                "cleaner",
+                true
+              ],
+              [
+                "target_type",
+                "cold",
+                false
+              ]
+            ]
+          ],
+          [
+            "MOVE",
+            [
+              [
+                "contested",
+                "True",
+                false
+              ],
+              [
+                "move_dir",
+                "S",
+                true
+              ],
+              [
+                "target_type",
+                "machine",
+                true
+              ]
+            ]
+          ],
+          [
+            "MOVE",
+            [
+              [
+                "contested",
+                "True",
+                false
+              ],
+              [
+                "role",
+                "operator",
+                true
+              ],
+              [
+                "target_type",
+                "machine",
+                false
+              ]
+            ]
+          ]
+        ]
       }
     ],
     "candidate_rule_count": 5669,
-    "grounded_rule_count": 424,
+    "grounded_rule_count": 360,
     "learning_trial_ids": [
       "trial_1",
       "trial_2",
       "trial_3",
       "trial_4",
-      "trial_5",
-      "trial_6"
+      "trial_5"
     ],
-    "behavioral_signature_count": 10,
-    "systems_enumerated": 6397,
-    "systems_simulated": 6397,
-    "shift_simulations": 37382,
+    "behavioral_signature_count": 8,
+    "systems_enumerated": 7589,
+    "systems_simulated": 7589,
+    "shift_simulations": 36758,
     "tested_by_rule_count": {
       "0": 1,
       "1": 5669,
-      "3": 727
+      "2": 96,
+      "3": 1823
     },
     "tested_by_mdl": {
       "0": 1,
@@ -805,10 +1080,12 @@ window.TASK_LIBRARY = {
       "3": 782,
       "4": 1706,
       "5": 1892,
-      "6": 936,
-      "7": 150,
-      "8": 93,
-      "9": 628
+      "6": 939,
+      "7": 174,
+      "8": 267,
+      "9": 1601,
+      "10": 15,
+      "11": 3
     },
     "task_shortcut_audit": [
       {
@@ -1110,46 +1387,9 @@ window.TASK_LIBRARY = {
       },
       {
         "shift_id": "trial_6",
-        "single_rule_count": 128,
-        "minimum_single_rule_mdl": 2,
-        "minimum_single_rule_examples": [
-          {
-            "action": "MOVE",
-            "conditions": [
-              {
-                "predicate": "contested",
-                "value": true,
-                "negated": false
-              },
-              {
-                "predicate": "move_dir",
-                "value": "E",
-                "negated": false
-              }
-            ],
-            "mdl": 2,
-            "text": "FORBID MOVE WHEN [contested=True & move_dir=E]",
-            "classification": "cross-context direction convention"
-          },
-          {
-            "action": "MOVE",
-            "conditions": [
-              {
-                "predicate": "contested",
-                "value": true,
-                "negated": false
-              },
-              {
-                "predicate": "move_dir",
-                "value": "N",
-                "negated": true
-              }
-            ],
-            "mdl": 2,
-            "text": "FORBID MOVE WHEN [contested=True & move_dir!=N]",
-            "classification": "cross-context direction convention"
-          }
-        ]
+        "single_rule_count": 0,
+        "minimum_single_rule_mdl": null,
+        "minimum_single_rule_examples": []
       },
       {
         "shift_id": "trial_7",
@@ -1251,7 +1491,218 @@ window.TASK_LIBRARY = {
     "search_cost_definition": "canonical rulebooks enumerated in increasing rule count and MDL after evidence-based pruning; participant attempts are not search cost",
     "scope_note": "Exact for rulebooks whose component rules each solve at least one layer-1 or layer-2 learning trial alone. Any submitted rulebook is still evaluated directly, including ungrounded shortcuts."
   },
-  "curriculum_prefixes": [],
+  "curriculum_prefixes": [
+    {
+      "prefix_length": 1,
+      "trial_ids": [
+        "trial_1"
+      ],
+      "reference_rule_count": 1,
+      "reference_mdl": 3,
+      "reference_solves_prefix": true,
+      "reasons": [
+        "ok"
+      ]
+    },
+    {
+      "prefix_length": 2,
+      "trial_ids": [
+        "trial_1",
+        "trial_2"
+      ],
+      "reference_rule_count": 2,
+      "reference_mdl": 6,
+      "reference_solves_prefix": true,
+      "reasons": [
+        "ok",
+        "ok"
+      ]
+    },
+    {
+      "prefix_length": 3,
+      "trial_ids": [
+        "trial_1",
+        "trial_2",
+        "trial_3"
+      ],
+      "reference_rule_count": 3,
+      "reference_mdl": 9,
+      "reference_solves_prefix": true,
+      "reasons": [
+        "ok",
+        "ok",
+        "ok"
+      ]
+    },
+    {
+      "prefix_length": 4,
+      "trial_ids": [
+        "trial_1",
+        "trial_2",
+        "trial_3",
+        "trial_4"
+      ],
+      "reference_rule_count": 3,
+      "reference_mdl": 9,
+      "reference_solves_prefix": true,
+      "reasons": [
+        "ok",
+        "ok",
+        "ok",
+        "ok"
+      ]
+    },
+    {
+      "prefix_length": 5,
+      "trial_ids": [
+        "trial_1",
+        "trial_2",
+        "trial_3",
+        "trial_4",
+        "trial_5"
+      ],
+      "reference_rule_count": 3,
+      "reference_mdl": 9,
+      "reference_solves_prefix": true,
+      "reasons": [
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok"
+      ]
+    },
+    {
+      "prefix_length": 6,
+      "trial_ids": [
+        "trial_1",
+        "trial_2",
+        "trial_3",
+        "trial_4",
+        "trial_5",
+        "trial_6"
+      ],
+      "reference_rule_count": 3,
+      "reference_mdl": 9,
+      "reference_solves_prefix": true,
+      "reasons": [
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok"
+      ]
+    },
+    {
+      "prefix_length": 7,
+      "trial_ids": [
+        "trial_1",
+        "trial_2",
+        "trial_3",
+        "trial_4",
+        "trial_5",
+        "trial_6",
+        "trial_7"
+      ],
+      "reference_rule_count": 3,
+      "reference_mdl": 9,
+      "reference_solves_prefix": true,
+      "reasons": [
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok"
+      ]
+    },
+    {
+      "prefix_length": 8,
+      "trial_ids": [
+        "trial_1",
+        "trial_2",
+        "trial_3",
+        "trial_4",
+        "trial_5",
+        "trial_6",
+        "trial_7",
+        "trial_8"
+      ],
+      "reference_rule_count": 3,
+      "reference_mdl": 9,
+      "reference_solves_prefix": true,
+      "reasons": [
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok"
+      ]
+    },
+    {
+      "prefix_length": 9,
+      "trial_ids": [
+        "trial_1",
+        "trial_2",
+        "trial_3",
+        "trial_4",
+        "trial_5",
+        "trial_6",
+        "trial_7",
+        "trial_8",
+        "trial_9"
+      ],
+      "reference_rule_count": 3,
+      "reference_mdl": 9,
+      "reference_solves_prefix": true,
+      "reasons": [
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok"
+      ]
+    },
+    {
+      "prefix_length": 10,
+      "trial_ids": [
+        "trial_1",
+        "trial_2",
+        "trial_3",
+        "trial_4",
+        "trial_5",
+        "trial_6",
+        "trial_7",
+        "trial_8",
+        "trial_9",
+        "trial_10"
+      ],
+      "reference_rule_count": 3,
+      "reference_mdl": 9,
+      "reference_solves_prefix": true,
+      "reasons": [
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok",
+        "ok"
+      ]
+    }
+  ],
   "tasks": [
     {
       "id": "trial_1",
@@ -1325,7 +1776,8 @@ window.TASK_LIBRARY = {
               "classification": "broad cold-storage protection"
             }
           ]
-        }
+        },
+        "optimality": null
       },
       "world": {
         "name": "safety_broad",
@@ -1759,7 +2211,8 @@ window.TASK_LIBRARY = {
               "classification": "cross-context direction convention"
             }
           ]
-        }
+        },
+        "optimality": null
       },
       "world": {
         "name": "road_eastbound_yields",
@@ -2264,7 +2717,8 @@ window.TASK_LIBRARY = {
               "classification": "permanent direction restriction"
             }
           ]
-        }
+        },
+        "optimality": null
       },
       "world": {
         "name": "machine_operator_setup",
@@ -2741,7 +3195,8 @@ window.TASK_LIBRARY = {
               "classification": "broad cold-storage protection"
             }
           ]
-        }
+        },
+        "optimality": null
       },
       "world": {
         "name": "safety_clean_access_3",
@@ -3247,7 +3702,8 @@ window.TASK_LIBRARY = {
               "classification": "protective norm with cleaner exception"
             }
           ]
-        }
+        },
+        "optimality": null
       },
       "world": {
         "name": "safety_cleaner_exception",
@@ -3731,68 +4187,94 @@ window.TASK_LIBRARY = {
     {
       "id": "trial_6",
       "label": "T6",
-      "level": 2,
-      "layer": 2,
+      "level": 3,
+      "layer": 3,
       "prerequisites": [
-        "trial_2"
+        "trial_2",
+        "trial_3"
       ],
       "family": "shared_rulebook_curriculum",
-      "active_agent_count": 2,
-      "description": "The same kind of traffic conflict appears in a different warehouse layout. The robots still need to reach their targets.",
+      "active_agent_count": 4,
+      "description": "A new warehouse layout contains two simultaneous coordination problems: an eastbound operator meets a carrier at an ordinary junction, and a carrier meets an operator at a machine. Find a shared pair of rules that solves both without blocking either route.",
       "participant_prompt": "Run the scene, inspect what goes wrong, and decide whether the shared rulebook should be added to or refined.",
       "analysis": {
-        "layer": 2,
+        "layer": 3,
         "prerequisites": [
-          "trial_2"
+          "trial_2",
+          "trial_3"
         ],
-        "stage": "Road convention replication",
-        "evidence_function": "A different junction layout tests whether the same convention is retained instead of being tied to one visible map.",
-        "expected_transition": "reuse contested eastbound yielding in a new layout",
-        "selected_variant": "road_eastbound_yields_new_layout",
+        "stage": "Compositional rule reuse",
+        "evidence_function": "The same two coordination norms must be retrieved and composed in a new layout. A single broad rule either blocks a necessary route or gives the wrong role priority.",
+        "expected_transition": "reuse the scoped road convention and machine-priority norm together",
+        "selected_variant": "combined_road_machine_reuse",
         "nuisance_score": [
-          4,
-          9
+          2,
+          7
         ],
-        "active_agent_count": 2,
+        "active_agent_count": 4,
         "contract_satisfied": true,
         "contract": {
           "empty": {
             "ok": false,
-            "reason": "collision",
+            "reason": "resource-conflict",
             "expected_ok": false,
-            "expected_reason": "collision",
+            "expected_reason": "resource-conflict",
             "matches": true
           },
-          "yield_east": {
+          "scoped_road_and_machine": {
             "ok": true,
             "reason": "ok",
             "expected_ok": true,
             "expected_reason": "ok",
             "matches": true
           },
-          "yield_north": {
+          "road_only": {
+            "ok": false,
+            "reason": "resource-conflict",
+            "expected_ok": false,
+            "expected_reason": "resource-conflict",
+            "matches": true
+          },
+          "machine_only": {
             "ok": false,
             "reason": "collision",
             "expected_ok": false,
             "expected_reason": "collision",
             "matches": true
           },
-          "scoped_yield_east": {
-            "ok": true,
-            "reason": "ok",
-            "expected_ok": true,
-            "expected_reason": "ok",
+          "broad_role_and_road": {
+            "ok": false,
+            "reason": "timeout",
+            "expected_ok": false,
+            "expected_reason": "timeout",
             "matches": true
           }
         },
         "shortcut_audit": {
           "shift_id": "trial_6",
-          "single_rule_count": 128,
-          "minimum_single_rule_mdl": 2,
-          "minimum_single_rule_examples": [
+          "single_rule_count": 0,
+          "minimum_single_rule_mdl": null,
+          "minimum_single_rule_examples": []
+        },
+        "optimality": {
+          "solver": "single_trial_exact_enumeration",
+          "hypothesis_space": "all canonical MOVE rules up to eight conditions",
+          "candidate_rule_count": 5669,
+          "single_rule_systems_tested": 5669,
+          "single_rule_solution_count": 0,
+          "two_rule_systems_tested_below_reference_mdl": 222706,
+          "two_rule_solution_count_below_reference_mdl": 0,
+          "minimum_rule_count": 2,
+          "minimum_mdl": 6,
+          "reference_rulebook": [
             {
               "action": "MOVE",
               "conditions": [
+                {
+                  "predicate": "target_type",
+                  "value": "machine",
+                  "negated": true
+                },
                 {
                   "predicate": "contested",
                   "value": true,
@@ -3804,33 +4286,41 @@ window.TASK_LIBRARY = {
                   "negated": false
                 }
               ],
-              "mdl": 2,
-              "text": "FORBID MOVE WHEN [contested=True & move_dir=E]",
-              "classification": "cross-context direction convention"
+              "mdl": 3,
+              "text": "FORBID MOVE WHEN [target_type!=machine & contested=True & move_dir=E]",
+              "classification": "road-scoped direction convention"
             },
             {
               "action": "MOVE",
               "conditions": [
+                {
+                  "predicate": "target_type",
+                  "value": "machine",
+                  "negated": false
+                },
                 {
                   "predicate": "contested",
                   "value": true,
                   "negated": false
                 },
                 {
-                  "predicate": "move_dir",
-                  "value": "N",
-                  "negated": true
+                  "predicate": "role",
+                  "value": "carrier",
+                  "negated": false
                 }
               ],
-              "mdl": 2,
-              "text": "FORBID MOVE WHEN [contested=True & move_dir!=N]",
-              "classification": "cross-context direction convention"
+              "mdl": 3,
+              "text": "FORBID MOVE WHEN [target_type=machine & contested=True & role=carrier]",
+              "classification": "contested machine priority"
             }
-          ]
+          ],
+          "reference_rulebook_mdl": 6,
+          "reference_solves": true,
+          "is_reference_optimal": true
         }
       },
       "world": {
-        "name": "road_eastbound_yields_new_layout",
+        "name": "combined_road_machine_reuse",
         "rows": 10,
         "cols": 10,
         "walls": [
@@ -4090,8 +4580,8 @@ window.TASK_LIBRARY = {
           {
             "id": 0,
             "start": [
-              5,
-              1
+              1,
+              4
             ],
             "role": "carrier",
             "carrying": "none",
@@ -4108,10 +4598,10 @@ window.TASK_LIBRARY = {
           {
             "id": 1,
             "start": [
-              8,
-              4
+              2,
+              3
             ],
-            "role": "carrier",
+            "role": "operator",
             "carrying": "none",
             "active": true,
             "tokens": [],
@@ -4122,49 +4612,80 @@ window.TASK_LIBRARY = {
                 4
               ]
             }
+          },
+          {
+            "id": 2,
+            "start": [
+              7,
+              8
+            ],
+            "role": "carrier",
+            "carrying": "none",
+            "active": true,
+            "tokens": [],
+            "goal": {
+              "kind": "operate",
+              "machine": "sealer"
+            }
+          },
+          {
+            "id": 3,
+            "start": [
+              8,
+              7
+            ],
+            "role": "operator",
+            "carrying": "none",
+            "active": true,
+            "tokens": [],
+            "goal": {
+              "kind": "operate",
+              "machine": "sealer"
+            }
           }
         ],
         "items": [],
-        "machines": [],
+        "machines": [
+          {
+            "id": "sealer",
+            "cell": [
+              8,
+              8
+            ],
+            "needs_permit": false,
+            "setup_role": "operator"
+          }
+        ],
         "scanners": []
       },
       "baseline": {
         "ok": false,
-        "reason": "collision",
+        "reason": "resource-conflict",
         "frames": [
           {
             "pos": {
               "0": [
-                5,
-                1
-              ],
-              "1": [
-                8,
+                1,
                 4
-              ]
-            },
-            "carry": {
-              "0": "none",
-              "1": "none"
-            },
-            "released": [],
-            "prepared_machines": [],
-            "event": null
-          },
-          {
-            "pos": {
-              "0": [
-                5,
-                2
               ],
               "1": [
+                2,
+                3
+              ],
+              "2": [
                 7,
-                4
+                8
+              ],
+              "3": [
+                8,
+                7
               ]
             },
             "carry": {
               "0": "none",
-              "1": "none"
+              "1": "none",
+              "2": "none",
+              "3": "none"
             },
             "released": [],
             "prepared_machines": [],
@@ -4173,48 +4694,39 @@ window.TASK_LIBRARY = {
           {
             "pos": {
               "0": [
-                5,
-                3
+                1,
+                4
               ],
               "1": [
-                6,
-                4
+                2,
+                3
+              ],
+              "2": [
+                7,
+                8
+              ],
+              "3": [
+                8,
+                7
               ]
             },
             "carry": {
               "0": "none",
-              "1": "none"
-            },
-            "released": [],
-            "prepared_machines": [],
-            "event": null
-          },
-          {
-            "pos": {
-              "0": [
-                5,
-                3
-              ],
-              "1": [
-                6,
-                4
-              ]
-            },
-            "carry": {
-              "0": "none",
-              "1": "none"
+              "1": "none",
+              "2": "none",
+              "3": "none"
             },
             "released": [],
             "prepared_machines": [],
             "event": {
-              "type": "collision",
+              "type": "resource-conflict",
               "cell": [
-                5,
-                4
+                8,
+                8
               ],
               "agents": [
-                0,
-                1
+                2,
+                3
               ]
             }
           }
@@ -4292,7 +4804,8 @@ window.TASK_LIBRARY = {
           "single_rule_count": 0,
           "minimum_single_rule_mdl": null,
           "minimum_single_rule_examples": []
-        }
+        },
+        "optimality": null
       },
       "world": {
         "name": "machine_priority_requires_context",
@@ -4779,7 +5292,8 @@ window.TASK_LIBRARY = {
           "single_rule_count": 0,
           "minimum_single_rule_mdl": null,
           "minimum_single_rule_examples": []
-        }
+        },
+        "optimality": null
       },
       "world": {
         "name": "safety_detour_causes_road_conflict",
@@ -5233,7 +5747,8 @@ window.TASK_LIBRARY = {
           "single_rule_count": 0,
           "minimum_single_rule_mdl": null,
           "minimum_single_rule_examples": []
-        }
+        },
+        "optimality": null
       },
       "world": {
         "name": "safety_detour_causes_machine_conflict",
@@ -5719,7 +6234,8 @@ window.TASK_LIBRARY = {
           "single_rule_count": 0,
           "minimum_single_rule_mdl": null,
           "minimum_single_rule_examples": []
-        }
+        },
+        "optimality": null
       },
       "world": {
         "name": "integrated_shared_system",

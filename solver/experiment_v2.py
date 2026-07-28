@@ -390,20 +390,6 @@ def road_convention_variants():
     ]
 
 
-def road_replication_variants():
-    """A second layout supporting the same eastbound-yields convention."""
-    return [
-        make_world(
-            "road_eastbound_yields_new_layout",
-            [
-                change(0, (5, 1), (5, 4)),
-                change(1, (8, 4), (2, 4)),
-            ],
-            zones={},
-        )
-    ]
-
-
 def machine_priority_variants():
     return [
         make_world(
@@ -443,6 +429,38 @@ def machine_replication_variants():
                 "sealer": Machine(
                     "sealer",
                     (5, 8),
+                    setup_role="operator",
+                ),
+            },
+        )
+    ]
+
+
+def combined_road_machine_reuse_variants():
+    """A new layout requiring the two learned coordination norms together.
+
+    The ordinary junction is unchanged in kind but appears before the machine
+    conflict in a different part of the route. The machine is at the lower
+    aisle exit, so neither conflict can be solved by memorising one location.
+    """
+    return [
+        make_world(
+            "combined_road_machine_reuse",
+            [
+                # Ordinary junction: the carrier continues south while the
+                # eastbound operator yields at the shared open square.
+                change(0, (1, 4), (5, 4), role="carrier"),
+                change(1, (2, 3), (2, 4), role="operator"),
+                # Machine junction: the operator prepares the lower station;
+                # the carrier enters after the station is released.
+                operate(2, (7, 8), "sealer", role="carrier"),
+                operate(3, (8, 7), "sealer", role="operator"),
+            ],
+            zones={},
+            machines={
+                "sealer": Machine(
+                    "sealer",
+                    (8, 8),
                     setup_role="operator",
                 ),
             },
@@ -723,23 +741,32 @@ SHIFT_BLUEPRINTS = (
         "id": "trial_6",
         "participant_label": "T6",
         "participant_description": (
-            "The same kind of traffic conflict appears in a different warehouse "
-            "layout. The robots still need to reach their targets."
+            "A new warehouse layout contains two simultaneous coordination "
+            "problems: an eastbound operator meets a carrier at an ordinary "
+            "junction, and a carrier meets an operator at a machine. Find a "
+            "shared pair of rules that solves both without blocking either "
+            "route."
         ),
-        "layer": 2,
-        "prerequisites": ("trial_2",),
-        "stage": "Road convention replication",
+        "layer": 3,
+        "prerequisites": ("trial_2", "trial_3"),
+        "stage": "Compositional rule reuse",
         "evidence_function": (
-            "A different junction layout tests whether the same convention "
-            "is retained instead of being tied to one visible map."
+            "The same two coordination norms must be retrieved and composed "
+            "in a new layout. A single broad rule either blocks a necessary "
+            "route or gives the wrong role priority."
         ),
-        "expected_transition": "reuse contested eastbound yielding in a new layout",
-        "variants": road_replication_variants,
+        "expected_transition": (
+            "reuse the scoped road convention and machine-priority norm "
+            "together"
+        ),
+        "variants": combined_road_machine_reuse_variants,
+        "optimality_reference": [SCOPED_YIELD_EAST, MACHINE_CARRIER_PRIORITY],
         "contract": {
-            "empty": (False, "collision"),
-            "yield_east": (True, "ok"),
-            "yield_north": (False, "collision"),
-            "scoped_yield_east": (True, "ok"),
+            "empty": (False, "resource-conflict"),
+            "scoped_road_and_machine": (True, "ok"),
+            "road_only": (False, "resource-conflict"),
+            "machine_only": (False, "collision"),
+            "broad_role_and_road": (False, "timeout"),
         },
     },
     {
@@ -775,8 +802,8 @@ SHIFT_BLUEPRINTS = (
         "participant_description": (
             "A spill-carrying robot must route around cold storage, while a "
             "cleaner carrying a spill must enter cold storage without causing "
-            "contamination. The detour also "
-            "brings one robot into a traffic conflict."
+            "contamination. The detour also brings one robot into a traffic "
+            "conflict."
         ),
         "layer": 3,
         "prerequisites": ("trial_5", "trial_6"),
@@ -801,8 +828,8 @@ SHIFT_BLUEPRINTS = (
         "participant_description": (
             "A spill-carrying operator must avoid cold storage while sharing a "
             "machine with a carrier. A cleaner carrying a spill must still enter "
-            "cold storage without causing contamination. A second spill-carrying carrier takes "
-            "another route through the warehouse."
+            "cold storage without causing contamination. A second spill-carrying "
+            "carrier takes another route through the warehouse."
         ),
         "layer": 3,
         "prerequisites": ("trial_5", "trial_7"),

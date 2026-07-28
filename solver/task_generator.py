@@ -21,7 +21,11 @@ from experiment_v2 import (
     ground_truth_json,
     rule_schema_json,
 )
-from norm_solver import analyze_curriculum_prefixes, solve_shift_suite
+from norm_solver import (
+    analyze_curriculum_prefixes,
+    analyze_trial_optimality,
+    solve_shift_suite,
+)
 from wh_engine import simulate
 
 
@@ -171,6 +175,14 @@ def make_library(*, include_solver=True, include_prefixes=False):
                     "contract_satisfied": contract_ok,
                     "contract": _contract_json(report),
                     "shortcut_audit": shortcut_audit.get(shift.id),
+                    "optimality": (
+                        analyze_trial_optimality(
+                            shift.world,
+                            blueprint["optimality_reference"],
+                        )
+                        if blueprint.get("optimality_reference")
+                        else None
+                    ),
                 },
                 "world": world_json(shift.world),
                 "baseline": {

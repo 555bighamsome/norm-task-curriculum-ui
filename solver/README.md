@@ -36,15 +36,16 @@ minimum global rules         3
 minimum global MDL           9
 minimum-MDL rulebooks        2
 compositional search cost    6,397
-late-trial single-rule       0 for T7--T10
+late-trial single-rule       0 for T6--T10
 ```
 
-The first six scenes establish the three reusable rule contents: precise
+The first five scenes establish the three reusable rule contents: precise
 cold-storage protection, an eastbound road convention, and machine-scoped
-carrier priority. T7--T9 are pairwise interaction tests: each puts two
-previously useful ideas into one causal situation. T10 is the integrated scene
-that requires all three. The removed cross-context refinement is reserved for
-an optional exploratory negative-transfer study rather than the core pilot.
+carrier priority. The new T6 composes the road and machine norms in one new
+layout. T7--T9 are the original interaction and integrated scenes, and T10
+remains the full integrated scene. The removed duplicate road-replication
+scene is reserved for an optional exploratory negative-transfer study rather
+than the core pilot.
 
 The solver's global optimum is a calibration target, not the participant's
 answer key. Participants may submit any rulebook that the engine accepts. The

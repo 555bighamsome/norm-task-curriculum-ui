@@ -56,6 +56,65 @@ def rulebook_mdl(rulebook):
     return sum(rule_mdl(rule) for rule in rulebook)
 
 
+def analyze_trial_optimality(world, reference_rulebook, *, max_conditions=MAX_RULE_CONDITIONS):
+    """Exhaustively certify a reference rulebook for one scene.
+
+    We first test every canonical single rule. If the reference has MDL m, we
+    then test every unordered two-rule system with total MDL strictly below m.
+    Therefore a successful reference with no shorter one- or two-rule system
+    is certified optimal in (rule count, then MDL) order for this hypothesis
+    space. This is deliberately separate from the grounded curriculum solver.
+    """
+    candidates = candidate_rules(max_conditions)
+    reference = [clone_rule(rule) for rule in reference_rulebook]
+    reference_mdl = rulebook_mdl(reference)
+    single_winners = []
+    for candidate in candidates:
+        if simulate(world, [candidate])[0]:
+            single_winners.append(candidate)
+
+    by_mdl = defaultdict(list)
+    for candidate in candidates:
+        by_mdl[rule_mdl(candidate)].append(candidate)
+    lower_mdl_pair_winners = []
+    pair_systems_tested = 0
+    for first_mdl in sorted(by_mdl):
+        for second_mdl in sorted(by_mdl):
+            if first_mdl > second_mdl or first_mdl + second_mdl >= reference_mdl:
+                continue
+            for first in by_mdl[first_mdl]:
+                for second in by_mdl[second_mdl]:
+                    if first_mdl == second_mdl and rule_key(first) >= rule_key(second):
+                        continue
+                    pair_systems_tested += 1
+                    if simulate(world, [first, second])[0]:
+                        lower_mdl_pair_winners.append((first, second))
+
+    reference_solves = simulate(world, reference)[0]
+    optimal = (
+        reference_solves
+        and not single_winners
+        and not lower_mdl_pair_winners
+    )
+    return {
+        "solver": "single_trial_exact_enumeration",
+        "hypothesis_space": "all canonical MOVE rules up to eight conditions",
+        "candidate_rule_count": len(candidates),
+        "single_rule_systems_tested": len(candidates),
+        "single_rule_solution_count": len(single_winners),
+        "two_rule_systems_tested_below_reference_mdl": pair_systems_tested,
+        "two_rule_solution_count_below_reference_mdl": len(lower_mdl_pair_winners),
+        "minimum_rule_count": 2 if reference_solves and not single_winners else (
+            0 if simulate(world, [])[0] else 1
+        ),
+        "minimum_mdl": reference_mdl if optimal else None,
+        "reference_rulebook": [_serialize_rule(rule) for rule in reference],
+        "reference_rulebook_mdl": reference_mdl,
+        "reference_solves": reference_solves,
+        "is_reference_optimal": optimal,
+    }
+
+
 def _literal_map(rule):
     rows = defaultdict(list)
     for predicate, value, negated in rule[1]:
@@ -392,8 +451,11 @@ def analyze_curriculum_prefixes(shifts=None):
         "trial_3": [GROUND_TRUTH_RULEBOOK[2]],
         "trial_4": [GROUND_TRUTH_RULEBOOK[0]],
         "trial_5": [GROUND_TRUTH_RULEBOOK[0]],
-        "trial_6": [GROUND_TRUTH_RULEBOOK[1]],
+        "trial_6": [GROUND_TRUTH_RULEBOOK[1], GROUND_TRUTH_RULEBOOK[2]],
         "trial_7": [GROUND_TRUTH_RULEBOOK[2]],
+        "trial_8": [GROUND_TRUTH_RULEBOOK[0], GROUND_TRUTH_RULEBOOK[1]],
+        "trial_9": [GROUND_TRUTH_RULEBOOK[0], GROUND_TRUTH_RULEBOOK[2]],
+        "trial_10": GROUND_TRUTH_RULEBOOK,
     }
     cumulative = []
     rows = []

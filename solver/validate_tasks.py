@@ -58,7 +58,7 @@ def main():
     if first_world["rows"] != 10 or first_world["cols"] != 10:
         raise SystemExit("every warehouse scene must be 10 x 10")
 
-    expected_active_counts = (1, 2, 2, 2, 4, 2, 4, 3, 4, 3)
+    expected_active_counts = (1, 2, 2, 2, 4, 4, 4, 3, 4, 3)
     for task_index, task in enumerate(tasks):
         signature = _static_world_signature(task)
         if signature["rows"] != 10 or signature["cols"] != 10:
@@ -122,12 +122,24 @@ def main():
         row["shift_id"]: row
         for row in solver.get("task_shortcut_audit", [])
     }
-    for task_id in ("trial_7", "trial_8", "trial_9", "trial_10"):
+    for task_id in ("trial_6", "trial_7", "trial_8", "trial_9", "trial_10"):
         row = shortcut_audit.get(task_id)
         if row is None or row["single_rule_count"] != 0:
             raise SystemExit(f"{task_id} still has a single-rule shortcut")
     if shortcut_audit.get("trial_5", {}).get("minimum_single_rule_mdl") != 3:
         raise SystemExit("trial_5 must require at least three conditions")
+    trial_6 = next(task for task in tasks if task["id"] == "trial_6")
+    optimality = trial_6["analysis"].get("optimality")
+    if not optimality or not optimality["is_reference_optimal"]:
+        raise SystemExit("trial_6 reference pair is not certified optimal")
+    if optimality["candidate_rule_count"] != schema["canonical_rule_count"]:
+        raise SystemExit("trial_6 did not search the full canonical rule space")
+    if optimality["single_rule_solution_count"] != 0:
+        raise SystemExit("trial_6 has a single-rule shortcut")
+    if optimality["two_rule_solution_count_below_reference_mdl"] != 0:
+        raise SystemExit("trial_6 has a lower-MDL two-rule shortcut")
+    if optimality["minimum_rule_count"] != 2 or optimality["minimum_mdl"] != 6:
+        raise SystemExit("trial_6 should have optimum k=2, MDL=6")
     if len(solver["solutions"]) < 2:
         raise SystemExit("expected multiple minimum-MDL systems")
     if solver["systems_enumerated"] <= solver["candidate_rule_count"]:
@@ -152,7 +164,9 @@ def main():
         f"{schema['canonical_rule_count']} canonical single rules, "
         f"k={solver['minimum_rule_count']}, MDL={solver['minimum_mdl']}, "
         f"minimum systems={len(solver['solutions'])}, "
-        f"search cost={solver['systems_enumerated']}"
+        f"search cost={solver['systems_enumerated']}; "
+        f"T6 optimum k={optimality['minimum_rule_count']}, "
+        f"MDL={optimality['minimum_mdl']}"
     )
 
 
