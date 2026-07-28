@@ -650,8 +650,7 @@ SHIFT_BLUEPRINTS = (
         "id": "trial_1",
         "participant_label": "T1",
         "participant_description": (
-            "A robot carrying a spill must cross the warehouse to reach its target. "
-            "Cold storage lies on the shortest route."
+            "One robot must reach its target in a warehouse containing cold storage."
         ),
         "layer": 1,
         "prerequisites": (),
@@ -673,8 +672,7 @@ SHIFT_BLUEPRINTS = (
         "id": "trial_2",
         "participant_label": "T2",
         "participant_description": (
-            "Two robots are approaching the same open-floor square. Both need to "
-            "reach their own targets without colliding."
+            "Two robots must reach their targets through the warehouse."
         ),
         "layer": 1,
         "prerequisites": (),
@@ -696,8 +694,7 @@ SHIFT_BLUEPRINTS = (
         "id": "trial_3",
         "participant_label": "T3",
         "participant_description": (
-            "An operator and a carrier are approaching the same machine. The "
-            "operator must prepare the machine before the carrier can use it."
+            "Two robots must complete their targets at the same machine."
         ),
         "layer": 1,
         "prerequisites": (),
@@ -719,8 +716,8 @@ SHIFT_BLUEPRINTS = (
         "id": "trial_4",
         "participant_label": "T4",
         "participant_description": (
-            "A clean delivery needs to enter cold storage while a spill-carrying "
-            "robot is also moving through the warehouse."
+            "Two robots must reach their targets in a warehouse containing cold "
+            "storage."
         ),
         "layer": 2,
         "prerequisites": ("trial_1",),
@@ -742,9 +739,8 @@ SHIFT_BLUEPRINTS = (
         "id": "trial_5",
         "participant_label": "T5",
         "participant_description": (
-            "A cleaner must enter cold storage carrying a spill without causing "
-            "contamination, "
-            "while both a carrier and an operator carrying spills must stay out."
+            "All robots must reach their targets in a warehouse containing cold "
+            "storage."
         ),
         "layer": 2,
         "prerequisites": ("trial_4",),
@@ -769,9 +765,7 @@ SHIFT_BLUEPRINTS = (
         "id": "trial_6",
         "participant_label": "T6",
         "participant_description": (
-            "A carrier and an operator meet at one junction. The operator later "
-            "meets a cleaner at another junction. Find a shared rule that lets "
-            "all three reach their targets."
+            "Three robots must reach their targets through the warehouse."
         ),
         "layer": 3,
         "prerequisites": ("trial_2",),
@@ -798,9 +792,7 @@ SHIFT_BLUEPRINTS = (
         "id": "trial_7",
         "participant_label": "T7",
         "participant_description": (
-            "A carrier and an operator meet at an open junction, while another "
-            "carrier and an operator meet at a machine. The carrier should yield "
-            "at the machine, but not everywhere."
+            "Four robots must reach their targets in a warehouse containing a machine."
         ),
         "layer": 3,
         "prerequisites": ("trial_2", "trial_3"),
@@ -825,10 +817,8 @@ SHIFT_BLUEPRINTS = (
         "id": "trial_8",
         "participant_label": "T8",
         "participant_description": (
-            "A spill-carrying robot must route around cold storage, while a "
-            "cleaner carrying a spill must enter cold storage without causing "
-            "contamination. The detour also brings one robot into a traffic "
-            "conflict."
+            "Three robots must reach their targets in a warehouse containing cold "
+            "storage."
         ),
         "layer": 3,
         "prerequisites": ("trial_5", "trial_6"),
@@ -851,10 +841,8 @@ SHIFT_BLUEPRINTS = (
         "id": "trial_9",
         "participant_label": "T9",
         "participant_description": (
-            "A spill-carrying operator must avoid cold storage while sharing a "
-            "machine with a carrier. A cleaner carrying a spill must still enter "
-            "cold storage without causing contamination. A second spill-carrying "
-            "carrier takes another route through the warehouse."
+            "Four robots must reach their targets in a warehouse containing cold "
+            "storage and a machine."
         ),
         "layer": 3,
         "prerequisites": ("trial_5", "trial_7"),
@@ -877,8 +865,8 @@ SHIFT_BLUEPRINTS = (
         "id": "trial_10",
         "participant_label": "T10",
         "participant_description": (
-            "One warehouse route links cold-storage safety, traffic coordination, "
-            "and machine access. All robots must finish under one shared rulebook."
+            "All robots must reach their targets in a warehouse containing cold "
+            "storage and a machine."
         ),
         "layer": 4,
         "prerequisites": ("trial_8", "trial_9"),

@@ -239,8 +239,8 @@ const SCENE_GUIDES = {
   },
   trial_5: {
     title:"Cleaner robots",
-    body:"A cleaner can enter cold storage while carrying a spill without causing contamination. Other robots carrying spills still need to stay out.",
-    example:"The cleaner icon identifies the robot with this exception.",
+    body:"A cleaner carrying a spill does not contaminate cold storage. A non-cleaner carrying a spill into cold storage does.",
+    example:"The cleaner icon identifies this robot role.",
   },
 };
 

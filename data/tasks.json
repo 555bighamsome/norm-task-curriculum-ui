@@ -1675,7 +1675,7 @@
       "prerequisites": [],
       "family": "shared_rulebook_curriculum",
       "active_agent_count": 1,
-      "description": "A robot carrying a spill must cross the warehouse to reach its target. Cold storage lies on the shortest route.",
+      "description": "One robot must reach its target in a warehouse containing cold storage.",
       "participant_prompt": "Run the scene, inspect what goes wrong, and decide whether the shared rulebook should be added to or refined.",
       "analysis": {
         "layer": 1,
@@ -2087,7 +2087,7 @@
       "prerequisites": [],
       "family": "shared_rulebook_curriculum",
       "active_agent_count": 2,
-      "description": "Two robots are approaching the same open-floor square. Both need to reach their own targets without colliding.",
+      "description": "Two robots must reach their targets through the warehouse.",
       "participant_prompt": "Run the scene, inspect what goes wrong, and decide whether the shared rulebook should be added to or refined.",
       "analysis": {
         "layer": 1,
@@ -2539,7 +2539,7 @@
       "prerequisites": [],
       "family": "shared_rulebook_curriculum",
       "active_agent_count": 2,
-      "description": "An operator and a carrier are approaching the same machine. The operator must prepare the machine before the carrier can use it.",
+      "description": "Two robots must complete their targets at the same machine.",
       "participant_prompt": "Run the scene, inspect what goes wrong, and decide whether the shared rulebook should be added to or refined.",
       "analysis": {
         "layer": 1,
@@ -3051,7 +3051,7 @@
       ],
       "family": "shared_rulebook_curriculum",
       "active_agent_count": 2,
-      "description": "A clean delivery needs to enter cold storage while a spill-carrying robot is also moving through the warehouse.",
+      "description": "Two robots must reach their targets in a warehouse containing cold storage.",
       "participant_prompt": "Run the scene, inspect what goes wrong, and decide whether the shared rulebook should be added to or refined.",
       "analysis": {
         "layer": 2,
@@ -3536,7 +3536,7 @@
       ],
       "family": "shared_rulebook_curriculum",
       "active_agent_count": 4,
-      "description": "A cleaner must enter cold storage carrying a spill without causing contamination, while both a carrier and an operator carrying spills must stay out.",
+      "description": "All robots must reach their targets in a warehouse containing cold storage.",
       "participant_prompt": "Run the scene, inspect what goes wrong, and decide whether the shared rulebook should be added to or refined.",
       "analysis": {
         "layer": 2,
@@ -4157,7 +4157,7 @@
       ],
       "family": "shared_rulebook_curriculum",
       "active_agent_count": 3,
-      "description": "A carrier and an operator meet at one junction. The operator later meets a cleaner at another junction. Find a shared rule that lets all three reach their targets.",
+      "description": "Three robots must reach their targets through the warehouse.",
       "participant_prompt": "Run the scene, inspect what goes wrong, and decide whether the shared rulebook should be added to or refined.",
       "analysis": {
         "layer": 3,
@@ -4683,7 +4683,7 @@
       ],
       "family": "shared_rulebook_curriculum",
       "active_agent_count": 4,
-      "description": "A carrier and an operator meet at an open junction, while another carrier and an operator meet at a machine. The carrier should yield at the machine, but not everywhere.",
+      "description": "Four robots must reach their targets in a warehouse containing a machine.",
       "participant_prompt": "Run the scene, inspect what goes wrong, and decide whether the shared rulebook should be added to or refined.",
       "analysis": {
         "layer": 3,
@@ -5171,7 +5171,7 @@
       ],
       "family": "shared_rulebook_curriculum",
       "active_agent_count": 3,
-      "description": "A spill-carrying robot must route around cold storage, while a cleaner carrying a spill must enter cold storage without causing contamination. The detour also brings one robot into a traffic conflict.",
+      "description": "Three robots must reach their targets in a warehouse containing cold storage.",
       "participant_prompt": "Run the scene, inspect what goes wrong, and decide whether the shared rulebook should be added to or refined.",
       "analysis": {
         "layer": 3,
@@ -5626,7 +5626,7 @@
       ],
       "family": "shared_rulebook_curriculum",
       "active_agent_count": 4,
-      "description": "A spill-carrying operator must avoid cold storage while sharing a machine with a carrier. A cleaner carrying a spill must still enter cold storage without causing contamination. A second spill-carrying carrier takes another route through the warehouse.",
+      "description": "Four robots must reach their targets in a warehouse containing cold storage and a machine.",
       "participant_prompt": "Run the scene, inspect what goes wrong, and decide whether the shared rulebook should be added to or refined.",
       "analysis": {
         "layer": 3,
@@ -6113,7 +6113,7 @@
       ],
       "family": "shared_rulebook_curriculum",
       "active_agent_count": 3,
-      "description": "One warehouse route links cold-storage safety, traffic coordination, and machine access. All robots must finish under one shared rulebook.",
+      "description": "All robots must reach their targets in a warehouse containing cold storage and a machine.",
       "participant_prompt": "Run the scene, inspect what goes wrong, and decide whether the shared rulebook should be added to or refined.",
       "analysis": {
         "layer": 4,
