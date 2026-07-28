@@ -1232,14 +1232,14 @@ function renderRules(){
       box.appendChild(label);
     }
     const ruleLabel = rule.conds.length === 0
-      ? "New rule"
+      ? ""
       : `Rule ${++activeRuleNumber}`;
     const card = document.createElement("div");
     card.className = "rule";
 
     const header = document.createElement("div");
     header.className = "rule-header";
-    header.innerHTML = `<strong>${ruleLabel}</strong>`;
+    header.innerHTML = ruleLabel ? `<strong>${ruleLabel}</strong>` : "";
     const actions = document.createElement("div");
     actions.className = "rule-actions";
     const save = document.createElement("button");
