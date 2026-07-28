@@ -6,6 +6,7 @@ from pathlib import Path
 
 from experiment_v2 import (
     GROUND_TRUTH_RULEBOOK,
+    NON_OPERATOR_PRIORITY,
     SHIFT_BLUEPRINTS,
     build_shift_library,
     contract_report,
@@ -41,6 +42,7 @@ def _static_world_signature(task):
         "protected": world["protected"],
         "machines": world["machines"],
         "scanners": world["scanners"],
+        "one_way": world.get("one_way", []),
     }
 
 
@@ -58,7 +60,7 @@ def main():
     if first_world["rows"] != 10 or first_world["cols"] != 10:
         raise SystemExit("every warehouse scene must be 10 x 10")
 
-    expected_active_counts = (1, 2, 2, 2, 4, 4, 4, 3, 4, 3)
+    expected_active_counts = (1, 2, 2, 2, 4, 3, 4, 3, 4, 3)
     for task_index, task in enumerate(tasks):
         signature = _static_world_signature(task)
         if signature["rows"] != 10 or signature["cols"] != 10:
@@ -107,8 +109,13 @@ def main():
         matches, _ = contract_report(shift.world, blueprint["contract"])
         if not matches:
             raise SystemExit(f"{shift.id} no longer satisfies its source contract")
-        if not simulate(shift.world, GROUND_TRUTH_RULEBOOK)[0]:
-            raise SystemExit(f"hidden compact rulebook fails {shift.id}")
+        reference_rulebook = (
+            [NON_OPERATOR_PRIORITY]
+            if shift.id == "trial_6"
+            else GROUND_TRUTH_RULEBOOK
+        )
+        if not simulate(shift.world, reference_rulebook)[0]:
+            raise SystemExit(f"hidden reference rulebook fails {shift.id}")
 
     schema = data["rule_schema"]
     solver = data["global_solver"]
@@ -122,7 +129,7 @@ def main():
         row["shift_id"]: row
         for row in solver.get("task_shortcut_audit", [])
     }
-    for task_id in ("trial_6", "trial_7", "trial_8", "trial_9", "trial_10"):
+    for task_id in ("trial_7", "trial_8", "trial_9", "trial_10"):
         row = shortcut_audit.get(task_id)
         if row is None or row["single_rule_count"] != 0:
             raise SystemExit(f"{task_id} still has a single-rule shortcut")
@@ -134,12 +141,14 @@ def main():
         raise SystemExit("trial_6 reference pair is not certified optimal")
     if optimality["candidate_rule_count"] != schema["canonical_rule_count"]:
         raise SystemExit("trial_6 did not search the full canonical rule space")
-    if optimality["single_rule_solution_count"] != 0:
-        raise SystemExit("trial_6 has a single-rule shortcut")
+    if optimality["single_rule_solution_count"] == 0:
+        raise SystemExit("trial_6 should have a one-rule solution")
+    if optimality["lower_mdl_single_solution_count"] != 0:
+        raise SystemExit("trial_6 has a lower-MDL single-rule shortcut")
     if optimality["two_rule_solution_count_below_reference_mdl"] != 0:
         raise SystemExit("trial_6 has a lower-MDL two-rule shortcut")
-    if optimality["minimum_rule_count"] != 2 or optimality["minimum_mdl"] != 6:
-        raise SystemExit("trial_6 should have optimum k=2, MDL=6")
+    if optimality["minimum_rule_count"] != 1 or optimality["minimum_mdl"] != 2:
+        raise SystemExit("trial_6 should have optimum k=1, MDL=2")
     if len(solver["solutions"]) < 2:
         raise SystemExit("expected multiple minimum-MDL systems")
     if solver["systems_enumerated"] <= solver["candidate_rule_count"]:

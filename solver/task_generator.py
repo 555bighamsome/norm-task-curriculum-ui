@@ -72,6 +72,10 @@ def world_json(world):
             {"zone": zone, "contaminant": contaminant}
             for zone, contaminant in world.protected
         ],
+        "one_way": [
+            {"cell": list(cell), "direction": direction}
+            for cell, direction in sorted(world.one_way.items())
+        ],
         "agents": [
             {
                 "id": agent.id,
@@ -232,6 +236,10 @@ def make_library(*, include_solver=True, include_prefixes=False):
             (
                 "At setup machines, an operator must enter first to prepare "
                 "the station; a carrier can enter after the operator releases it."
+            ),
+            (
+                "In a marked one-way passage, robots may move only in the "
+                "direction shown by the arrow."
             ),
             "The same shared rulebook applies to every scene.",
         ],

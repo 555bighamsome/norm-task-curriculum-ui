@@ -36,16 +36,17 @@ minimum global rules         3
 minimum global MDL           9
 minimum-MDL rulebooks        2
 compositional search cost    6,397
-late-trial single-rule       0 for T6--T10
+late-trial single-rule       T6 has 240 canonical single-rule solutions; T7--T10 have 0
 ```
 
-The first five scenes establish the three reusable rule contents: precise
-cold-storage protection, an eastbound road convention, and machine-scoped
-carrier priority. The new T6 composes the road and machine norms in one new
-layout. T7--T9 are the original interaction and integrated scenes, and T10
-remains the full integrated scene. The removed duplicate road-replication
-scene is reserved for an optional exploratory negative-transfer study rather
-than the core pilot.
+The first five scenes establish precise cold-storage protection, a road
+convention, and machine-scoped carrier priority. T6 now introduces a genuine
+one-way passage and two successive pairwise conflicts: carrier/operator at the
+entrance, then operator/cleaner at the exit. Its local reference solution is
+the compact role rule `contested AND robot IS NOT operator`; the exact solver
+also reports all other successful single-rule alternatives. T7--T9 are the
+original interaction and integrated scenes, and T10 remains the full
+integrated scene.
 
 The solver's global optimum is a calibration target, not the participant's
 answer key. Participants may submit any rulebook that the engine accepts. The

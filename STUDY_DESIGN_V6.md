@@ -38,7 +38,7 @@ T4  safety rule becomes spill-sensitive
 T5  safety rule gains a cleaner exception
 
 T2  contested-road convention
-T6  road convention is reused in a new layout
+T6  a one-way passage creates successive carrier/operator and operator/cleaner conflicts
 
 T3  machine priority rule
 T7  machine priority is reused at a new station

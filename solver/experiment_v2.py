@@ -155,6 +155,10 @@ MACHINE_NON_OPERATOR_PRIORITY = rule(
     literal("contested", True),
     literal("role", "operator", True),
 )
+NON_OPERATOR_PRIORITY = rule(
+    literal("contested", True),
+    literal("role", "operator", True),
+)
 
 ANCHOR_RULEBOOKS = {
     "empty": [],
@@ -171,6 +175,7 @@ ANCHOR_RULEBOOKS = {
     "compressed_yield": [YIELD_NORTH_OR_WEST],
     "machine_carrier_priority": [MACHINE_CARRIER_PRIORITY],
     "machine_non_operator_priority": [MACHINE_NON_OPERATOR_PRIORITY],
+    "non_operator_priority": [NON_OPERATOR_PRIORITY],
     "broad_carrier_priority": [BROAD_CARRIER_PRIORITY],
     "scoped_yield_east": [SCOPED_YIELD_EAST],
     "scoped_road_and_machine": [SCOPED_YIELD_EAST, MACHINE_CARRIER_PRIORITY],
@@ -256,7 +261,7 @@ def facility_zones():
     }
 
 
-def make_world(name, changes, *, zones=None, machines=None, walls=None):
+def make_world(name, changes, *, zones=None, machines=None, walls=None, one_way=None):
     agents = [
         Agent(
             row["agent_id"],
@@ -274,6 +279,7 @@ def make_world(name, changes, *, zones=None, machines=None, walls=None):
         agents=sorted(agents, key=lambda agent: agent.id),
         machines=dict(machines or {}),
         protected=[("cold", "spill")],
+        one_way=dict(one_way or {}),
         T=80,
     )
 
@@ -463,6 +469,58 @@ def combined_road_machine_reuse_variants():
                     (8, 8),
                     setup_role="operator",
                 ),
+            },
+        )
+    ]
+
+
+def one_way_pairwise_variants():
+    """A directed passage creates two sequential, role-based conflicts.
+
+    Carrier and operator meet at the first junction.  The operator then uses
+    the eastbound passage and meets the cleaner at a second junction.  The
+    carrier exits after the first junction, so no step contains a three-way
+    contest or a carrier/cleaner contest.
+    """
+    open_cells = {
+        # Main passage and first junction.
+        *( (4, col) for col in range(1, 7) ),
+        # Operator approaches the first junction from the north.
+        (3, 3),
+        # Carrier exits below the first junction.
+        (5, 3),
+        # The operator turns south at the end of the one-way passage.
+        (5, 5),
+        (5, 6),
+        (5, 7),
+        (5, 8),
+        # Cleaner approaches the second junction from the south by a longer
+        # feeder route, then leaves west toward its own target.
+        (6, 6),
+        (7, 6),
+        (8, 6),
+        (8, 7),
+        (8, 8),
+    }
+    walls = {
+        (row, col)
+        for row in range(ROWS)
+        for col in range(COLS)
+        if (row, col) not in open_cells
+    }
+    return [
+        make_world(
+            "one_way_sequential_priority",
+            [
+                change(0, (4, 2), (5, 3), role="carrier"),
+                change(1, (3, 3), (5, 8), role="operator"),
+                change(2, (8, 8), (5, 5), role="cleaner"),
+            ],
+            zones={},
+            walls=walls,
+            one_way={
+                (4, 4): "E",
+                (4, 5): "E",
             },
         )
     ]
@@ -741,32 +799,29 @@ SHIFT_BLUEPRINTS = (
         "id": "trial_6",
         "participant_label": "T6",
         "participant_description": (
-            "A new warehouse layout contains two simultaneous coordination "
-            "problems: an eastbound operator meets a carrier at an ordinary "
-            "junction, and a carrier meets an operator at a machine. Find a "
-            "shared pair of rules that solves both without blocking either "
-            "route."
+            "Three robots use a one-way passage. A carrier and an operator meet "
+            "at the entrance, and the operator later meets a cleaner at the "
+            "exit. Find a shared rule that lets all three reach their targets."
         ),
         "layer": 3,
-        "prerequisites": ("trial_2", "trial_3"),
-        "stage": "Compositional rule reuse",
+        "prerequisites": ("trial_2",),
+        "stage": "Sequential role-priority reuse",
         "evidence_function": (
-            "The same two coordination norms must be retrieved and composed "
-            "in a new layout. A single broad rule either blocks a necessary "
-            "route or gives the wrong role priority."
+            "Two local conflicts have different locations and different pairs "
+            "of roles, but share one priority structure. The operator has "
+            "priority at both junctions; carrier and cleaner yield."
         ),
         "expected_transition": (
-            "reuse the scoped road convention and machine-priority norm "
-            "together"
+            "specific role rules -> one reusable non-operator priority rule"
         ),
-        "variants": combined_road_machine_reuse_variants,
-        "optimality_reference": [SCOPED_YIELD_EAST, MACHINE_CARRIER_PRIORITY],
+        "variants": one_way_pairwise_variants,
+        "optimality_reference": [NON_OPERATOR_PRIORITY],
         "contract": {
-            "empty": (False, "resource-conflict"),
-            "scoped_road_and_machine": (True, "ok"),
-            "road_only": (False, "resource-conflict"),
-            "machine_only": (False, "collision"),
-            "broad_role_and_road": (False, "timeout"),
+            "empty": (False, "collision"),
+            "non_operator_priority": (True, "ok"),
+            "broad_carrier_priority": (False, "collision"),
+            "machine_carrier_priority": (False, "collision"),
+            "scoped_yield_east": (False, "collision"),
         },
     },
     {

@@ -59,11 +59,11 @@ def rulebook_mdl(rulebook):
 def analyze_trial_optimality(world, reference_rulebook, *, max_conditions=MAX_RULE_CONDITIONS):
     """Exhaustively certify a reference rulebook for one scene.
 
-    We first test every canonical single rule. If the reference has MDL m, we
-    then test every unordered two-rule system with total MDL strictly below m.
-    Therefore a successful reference with no shorter one- or two-rule system
-    is certified optimal in (rule count, then MDL) order for this hypothesis
-    space. This is deliberately separate from the grounded curriculum solver.
+    We first test every canonical single rule.  For a one-rule reference, we
+    check whether any lower-MDL single rule also solves.  For a multi-rule
+    reference, we additionally test every unordered two-rule system with
+    total MDL strictly below the reference.  This is deliberately separate
+    from the grounded curriculum solver.
     """
     candidates = candidate_rules(max_conditions)
     reference = [clone_rule(rule) for rule in reference_rulebook]
@@ -73,28 +73,44 @@ def analyze_trial_optimality(world, reference_rulebook, *, max_conditions=MAX_RU
         if simulate(world, [candidate])[0]:
             single_winners.append(candidate)
 
+    lower_mdl_single_winners = [
+        candidate
+        for candidate in single_winners
+        if rule_mdl(candidate) < reference_mdl
+    ]
+
     by_mdl = defaultdict(list)
     for candidate in candidates:
         by_mdl[rule_mdl(candidate)].append(candidate)
     lower_mdl_pair_winners = []
     pair_systems_tested = 0
-    for first_mdl in sorted(by_mdl):
-        for second_mdl in sorted(by_mdl):
-            if first_mdl > second_mdl or first_mdl + second_mdl >= reference_mdl:
-                continue
-            for first in by_mdl[first_mdl]:
-                for second in by_mdl[second_mdl]:
-                    if first_mdl == second_mdl and rule_key(first) >= rule_key(second):
-                        continue
-                    pair_systems_tested += 1
-                    if simulate(world, [first, second])[0]:
-                        lower_mdl_pair_winners.append((first, second))
+    if len(reference) >= 2:
+        for first_mdl in sorted(by_mdl):
+            for second_mdl in sorted(by_mdl):
+                if first_mdl > second_mdl or first_mdl + second_mdl >= reference_mdl:
+                    continue
+                for first in by_mdl[first_mdl]:
+                    for second in by_mdl[second_mdl]:
+                        if first_mdl == second_mdl and rule_key(first) >= rule_key(second):
+                            continue
+                        pair_systems_tested += 1
+                        if simulate(world, [first, second])[0]:
+                            lower_mdl_pair_winners.append((first, second))
 
     reference_solves = simulate(world, reference)[0]
-    optimal = (
-        reference_solves
-        and not single_winners
-        and not lower_mdl_pair_winners
+    optimal = reference_solves and (
+        (
+            len(reference) == 1
+            and not lower_mdl_single_winners
+        )
+        or (
+            len(reference) >= 2
+            and not single_winners
+            and not lower_mdl_pair_winners
+        )
+    )
+    minimum_rule_count = 0 if simulate(world, [])[0] else (
+        1 if single_winners else len(reference)
     )
     return {
         "solver": "single_trial_exact_enumeration",
@@ -102,11 +118,10 @@ def analyze_trial_optimality(world, reference_rulebook, *, max_conditions=MAX_RU
         "candidate_rule_count": len(candidates),
         "single_rule_systems_tested": len(candidates),
         "single_rule_solution_count": len(single_winners),
+        "lower_mdl_single_solution_count": len(lower_mdl_single_winners),
         "two_rule_systems_tested_below_reference_mdl": pair_systems_tested,
         "two_rule_solution_count_below_reference_mdl": len(lower_mdl_pair_winners),
-        "minimum_rule_count": 2 if reference_solves and not single_winners else (
-            0 if simulate(world, [])[0] else 1
-        ),
+        "minimum_rule_count": minimum_rule_count,
         "minimum_mdl": reference_mdl if optimal else None,
         "reference_rulebook": [_serialize_rule(rule) for rule in reference],
         "reference_rulebook_mdl": reference_mdl,

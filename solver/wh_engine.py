@@ -63,8 +63,14 @@ class World:
     machines: dict = field(default_factory=dict)
     scanners: set = field(default_factory=set)
     protected: list = field(default_factory=lambda: [("cold", "tainted")])
+    one_way: dict = field(default_factory=dict)  # cell -> allowed direction
     T: int = 60
     def passable(self, p): return p not in self.walls
+    def can_move(self, current, target, direction):
+        if not self.passable(target):
+            return False
+        required = self.one_way.get(current)
+        return required is None or required == direction
 
 def zone_of(w, c): return w.zone.get(c, "normal")
 
@@ -165,7 +171,7 @@ def plan(world, agent, static_norms):
         # moves
         for d, (dr, dc) in DIRS.items():
             n = (cell[0] + dr, cell[1] + dc)
-            if world.passable(n) and not static_forbidden(world, agent, static_norms,
+            if world.can_move(cell, n, d) and not static_forbidden(world, agent, static_norms,
                                                            "MOVE", cell=n, move_dir=d):
                 turn = int(heading is not None and heading != d)
                 succ.append((("move", n), (n, has_item, used, scanned, d), turn))
@@ -201,8 +207,18 @@ def simulate(world, law, trace=False):
     plans, ptr = {}, {}
     # fresh item scanned-state per run
     items = {k: Item(v.id, v.cell, v.colour, v.hazardous, v.scanned) for k, v in world.items.items()}
-    w = World(world.name, world.walls, world.zone, world.agents, items,
-              world.machines, world.scanners, world.protected, world.T)
+    w = World(
+        name=world.name,
+        walls=world.walls,
+        zone=world.zone,
+        agents=world.agents,
+        items=items,
+        machines=world.machines,
+        scanners=world.scanners,
+        protected=world.protected,
+        one_way=world.one_way,
+        T=world.T,
+    )
     for a in w.agents:
         p = plan(w, a, static_norms)
         if p is None:
