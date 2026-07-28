@@ -776,6 +776,8 @@ function renderAgentProgress(frame){
 
 function renderFrame(frame){
   Object.values(machineEls).forEach(el => el.classList.remove("available"));
+  const releasedMachines = new Set();
+  const occupiedMachines = new Set();
   scn.agents.forEach(agent => {
     const p = frame.pos[agent.id];
     const el = robotEls[agent.id];
@@ -783,7 +785,7 @@ function renderFrame(frame){
     const meta = frame.agents?.[agent.id] || frame.agents?.[String(agent.id)] || null;
     const released = !!meta?.released;
     el.classList.toggle("released", released);
-    el.setAttribute("aria-hidden", released ? "true" : "false");
+    el.setAttribute("aria-hidden", "false");
     el.style.left = (p[1] * CELL + 7) + "px";
     el.style.top = (p[0] * CELL + 7) + "px";
     el.classList.toggle("done", !!meta?.done);
@@ -792,9 +794,16 @@ function renderFrame(frame){
     el.classList.toggle("failed", !!meta?.failed);
     el.setAttribute("aria-label", `Robot ${agent.id}: ${stateText(meta)}`);
     el.innerHTML = robotMarkup(agent, meta);
-    if(released && agent.goal?.kind === "operate"){
-      machineEls[agent.goal.machine]?.classList.add("available");
+    if(agent.goal?.kind === "operate"){
+      if(released){
+        releasedMachines.add(agent.goal.machine);
+      }else if(sameCell(p, scn.machines[agent.goal.machine]?.cell)){
+        occupiedMachines.add(agent.goal.machine);
+      }
     }
+  });
+  releasedMachines.forEach(machineId => {
+    if(!occupiedMachines.has(machineId)) machineEls[machineId]?.classList.add("available");
   });
   document.querySelectorAll(".cell.flash").forEach(el => el.classList.remove("flash"));
   if(frame.event && frame.event.cell && frame.event.type !== "machine-retreat"){

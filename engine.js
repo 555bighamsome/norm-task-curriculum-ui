@@ -286,11 +286,8 @@ function protectedPollution(world, agent, cell){
 }
 
 function snapshot(scn, pos, event, meta={}){
-  const visualPos = meta.visualPos || pos;
   const out = {};
-  Object.keys(pos).forEach(id => {
-    out[id] = (visualPos[id] || visualPos[String(id)] || pos[id]).slice();
-  });
+  Object.keys(pos).forEach(id => { out[id] = pos[id].slice(); });
   const plans = meta.plans || {};
   const ptr = meta.ptr || {};
   const blocked = meta.blocked || new Set();
@@ -387,10 +384,8 @@ function simulate(scn, rules){
       }
     }
     if(newlyReleased.length){
-      const retreatPos = {};
-      Object.keys(pos).forEach(id => { retreatPos[id] = pos[id].slice(); });
       newlyReleased.forEach(agent => {
-        retreatPos[agent.id] = (machineEntryCells[agent.id] || pos[agent.id]).slice();
+        pos[agent.id] = (machineEntryCells[agent.id] || pos[agent.id]).slice();
       });
       frames.push(snapshot(scn, pos, {
         type:"machine-retreat",
@@ -400,7 +395,6 @@ function simulate(scn, rules){
         plans,
         ptr,
         released,
-        visualPos:retreatPos,
         tick:t + 1,
       }));
       newlyReleased.forEach(agent => released.add(agent.id));
@@ -408,7 +402,6 @@ function simulate(scn, rules){
         plans,
         ptr,
         released,
-        visualPos:retreatPos,
         tick:t + 1,
       }));
     }
@@ -418,14 +411,6 @@ function simulate(scn, rules){
 
     const previousPos = {};
     Object.keys(pos).forEach(id => { previousPos[id] = pos[id].slice(); });
-
-    if(newlyReleased.length){
-      // Released agents no longer occupy their display square in the simulation.
-      newlyReleased.forEach(agent => {
-        const id = agent.id;
-        if(!machineEntryCells[id]) machineEntryCells[id] = previousPos[id].slice();
-      });
-    }
 
     const intend = {};
     for(const agent of scn.agents){
@@ -588,6 +573,7 @@ function simulate(scn, rules){
     }
 
     for(const agent of scn.agents){
+      if(released.has(agent.id)) continue;
       const pollution = protectedPollution(world, agent, pos[agent.id]);
       if(pollution){
         return {
