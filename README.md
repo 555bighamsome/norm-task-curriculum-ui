@@ -1,7 +1,7 @@
-# Shared Rulebook
+# Shared Rules Curriculum
 
-A browser experiment about how people construct one compact system of shared
-rules from a sequence of social counterexamples.
+A browser experiment about how people build and reuse shared rules while moving
+through a sequence of increasingly difficult warehouse scenes.
 
 Open the experiment:
 
@@ -9,20 +9,20 @@ Open the experiment:
 file:///Users/kiki/Agent%20social/norm-task/index.html
 ```
 
-## Active V6 design
+## Active design
 
 - controlled `10 x 10` warehouse maps;
 - only the robots relevant to each contrast are shown;
 - eleven scenes arranged as three foundation branches, refinements, pairwise combinations, and one integrated workflow;
-- one rulebook that persists across the complete scene library;
+- one scene-specific rule set that is preserved when a scene is revisited;
+- an optional saved-rule library that can be reused in later scenes;
 - one action frame: `IF conditions THEN do not move into the square`;
 - typed conditions with `IS`, `IS NOT`, and `AND`;
 - an exact compositional baseline over the same grammar shown to participants.
 
-The scenes supply evidence about one shared normative system, not eleven puzzles
-with separate answers. The design moves from independent rule discovery to
-counterexample-driven refinement, cross-context reuse, and a final causally
-linked system.
+The curriculum moves from independent rule discovery to counterexample-driven
+refinement and later reuse. Each scene is tested on its own; the task does not
+require a single rulebook to solve every scene.
 
 Current exact calibration:
 
@@ -66,6 +66,6 @@ Generated browser data:
 - `data/tasks.json`
 - `data/tasks.generated.js`
 
-Use `index.html?debug=1` for researcher controls and event-log export.
-The default page exposes every scene for test calibration. Use
-`index.html?order=curriculum` to enable prerequisite-frontier unlocking.
+Use `index.html?debug=1` for researcher controls and event-log export. The
+default page uses prerequisite-frontier curriculum order. Use
+`index.html?order=free` to expose every scene for test calibration.
