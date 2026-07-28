@@ -1529,7 +1529,6 @@ body{min-height:0;}
 .guide-summary[hidden]{display:none;}
 .guide-summary-heading{display:flex;align-items:baseline;gap:9px;margin-bottom:9px;}
 .guide-summary-heading strong{font-size:13px;font-weight:700;color:#222;}
-.guide-summary-heading span{font-size:11px;color:#666;}
 .guide-summary-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 12px;}
 .guide-summary .guide-item{display:flex;align-items:flex-start;gap:7px;min-width:0;padding:0;border:0;background:transparent;}
 .guide-summary .guide-icon{width:27px;height:27px;border:1px solid #888;background:#fff;}
