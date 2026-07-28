@@ -12,7 +12,7 @@ version remains available with `?order=curriculum`.
 | T3 | Foundation | Machine priority | operator setup makes role priority meaningful |
 | T4 | Refinement | Safety precision | a clean delivery rejects the broad safety rule |
 | T5 | Refinement | Role exception | cleaner access makes `IS NOT cleaner` useful |
-| T6 | Refinement | Sequential role priority | a one-way passage creates two successive two-robot conflicts |
+| T6 | Refinement | Sequential role priority | walls create two successive two-robot conflicts at different junctions |
 | T7 | Refinement | Machine reuse | the same priority must work at a new station |
 | T8 | Combination | Safety + road | a safety detour causes a later traffic conflict |
 | T9 | Combination | Safety + machine | safety and machine access are coupled in one route |

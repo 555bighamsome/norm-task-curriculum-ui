@@ -11,7 +11,6 @@ window.TASK_LIBRARY = {
     "Carrying a spill into cold storage can contaminate the shared area. A cleaner can enter with a spill without causing contamination.",
     "A machine is used by entering its square. Only one robot can enter it per step.",
     "At setup machines, an operator must enter first to prepare the station; a carrier can enter after the operator releases it.",
-    "In a marked one-way passage, robots may move only in the direction shown by the arrow.",
     "The same shared rulebook applies to every scene."
   ],
   "rule_schema": {
@@ -1720,218 +1719,7 @@ window.TASK_LIBRARY = {
     "search_cost_definition": "canonical rulebooks enumerated in increasing rule count and MDL after evidence-based pruning; participant attempts are not search cost",
     "scope_note": "Exact for rulebooks whose component rules each solve at least one layer-1 or layer-2 learning trial alone. Any submitted rulebook is still evaluated directly, including ungrounded shortcuts."
   },
-  "curriculum_prefixes": [
-    {
-      "prefix_length": 1,
-      "trial_ids": [
-        "trial_1"
-      ],
-      "reference_rule_count": 1,
-      "reference_mdl": 3,
-      "reference_solves_prefix": true,
-      "reasons": [
-        "ok"
-      ]
-    },
-    {
-      "prefix_length": 2,
-      "trial_ids": [
-        "trial_1",
-        "trial_2"
-      ],
-      "reference_rule_count": 2,
-      "reference_mdl": 6,
-      "reference_solves_prefix": true,
-      "reasons": [
-        "ok",
-        "ok"
-      ]
-    },
-    {
-      "prefix_length": 3,
-      "trial_ids": [
-        "trial_1",
-        "trial_2",
-        "trial_3"
-      ],
-      "reference_rule_count": 3,
-      "reference_mdl": 9,
-      "reference_solves_prefix": true,
-      "reasons": [
-        "ok",
-        "ok",
-        "ok"
-      ]
-    },
-    {
-      "prefix_length": 4,
-      "trial_ids": [
-        "trial_1",
-        "trial_2",
-        "trial_3",
-        "trial_4"
-      ],
-      "reference_rule_count": 3,
-      "reference_mdl": 9,
-      "reference_solves_prefix": true,
-      "reasons": [
-        "ok",
-        "ok",
-        "ok",
-        "ok"
-      ]
-    },
-    {
-      "prefix_length": 5,
-      "trial_ids": [
-        "trial_1",
-        "trial_2",
-        "trial_3",
-        "trial_4",
-        "trial_5"
-      ],
-      "reference_rule_count": 3,
-      "reference_mdl": 9,
-      "reference_solves_prefix": true,
-      "reasons": [
-        "ok",
-        "ok",
-        "ok",
-        "ok",
-        "ok"
-      ]
-    },
-    {
-      "prefix_length": 6,
-      "trial_ids": [
-        "trial_1",
-        "trial_2",
-        "trial_3",
-        "trial_4",
-        "trial_5",
-        "trial_6"
-      ],
-      "reference_rule_count": 3,
-      "reference_mdl": 9,
-      "reference_solves_prefix": false,
-      "reasons": [
-        "ok",
-        "ok",
-        "ok",
-        "ok",
-        "ok",
-        "collision"
-      ]
-    },
-    {
-      "prefix_length": 7,
-      "trial_ids": [
-        "trial_1",
-        "trial_2",
-        "trial_3",
-        "trial_4",
-        "trial_5",
-        "trial_6",
-        "trial_7"
-      ],
-      "reference_rule_count": 3,
-      "reference_mdl": 9,
-      "reference_solves_prefix": false,
-      "reasons": [
-        "ok",
-        "ok",
-        "ok",
-        "ok",
-        "ok",
-        "collision",
-        "ok"
-      ]
-    },
-    {
-      "prefix_length": 8,
-      "trial_ids": [
-        "trial_1",
-        "trial_2",
-        "trial_3",
-        "trial_4",
-        "trial_5",
-        "trial_6",
-        "trial_7",
-        "trial_8"
-      ],
-      "reference_rule_count": 3,
-      "reference_mdl": 9,
-      "reference_solves_prefix": false,
-      "reasons": [
-        "ok",
-        "ok",
-        "ok",
-        "ok",
-        "ok",
-        "collision",
-        "ok",
-        "ok"
-      ]
-    },
-    {
-      "prefix_length": 9,
-      "trial_ids": [
-        "trial_1",
-        "trial_2",
-        "trial_3",
-        "trial_4",
-        "trial_5",
-        "trial_6",
-        "trial_7",
-        "trial_8",
-        "trial_9"
-      ],
-      "reference_rule_count": 3,
-      "reference_mdl": 9,
-      "reference_solves_prefix": false,
-      "reasons": [
-        "ok",
-        "ok",
-        "ok",
-        "ok",
-        "ok",
-        "collision",
-        "ok",
-        "ok",
-        "ok"
-      ]
-    },
-    {
-      "prefix_length": 10,
-      "trial_ids": [
-        "trial_1",
-        "trial_2",
-        "trial_3",
-        "trial_4",
-        "trial_5",
-        "trial_6",
-        "trial_7",
-        "trial_8",
-        "trial_9",
-        "trial_10"
-      ],
-      "reference_rule_count": 3,
-      "reference_mdl": 9,
-      "reference_solves_prefix": false,
-      "reasons": [
-        "ok",
-        "ok",
-        "ok",
-        "ok",
-        "ok",
-        "collision",
-        "ok",
-        "ok",
-        "ok",
-        "ok"
-      ]
-    }
-  ],
+  "curriculum_prefixes": [],
   "tasks": [
     {
       "id": "trial_1",
@@ -2280,7 +2068,6 @@ window.TASK_LIBRARY = {
             "contaminant": "spill"
           }
         ],
-        "one_way": [],
         "agents": [
           {
             "id": 0,
@@ -2701,7 +2488,6 @@ window.TASK_LIBRARY = {
             "contaminant": "spill"
           }
         ],
-        "one_way": [],
         "agents": [
           {
             "id": 0,
@@ -3208,7 +2994,6 @@ window.TASK_LIBRARY = {
             "contaminant": "spill"
           }
         ],
-        "one_way": [],
         "agents": [
           {
             "id": 0,
@@ -3702,7 +3487,6 @@ window.TASK_LIBRARY = {
             "contaminant": "spill"
           }
         ],
-        "one_way": [],
         "agents": [
           {
             "id": 0,
@@ -4210,7 +3994,6 @@ window.TASK_LIBRARY = {
             "contaminant": "spill"
           }
         ],
-        "one_way": [],
         "agents": [
           {
             "id": 0,
@@ -4428,7 +4211,7 @@ window.TASK_LIBRARY = {
       ],
       "family": "shared_rulebook_curriculum",
       "active_agent_count": 3,
-      "description": "Three robots use a one-way passage. A carrier and an operator meet at the entrance, and the operator later meets a cleaner at the exit. Find a shared rule that lets all three reach their targets.",
+      "description": "Three robots use a narrow warehouse route. A carrier and an operator meet at the first junction, and the operator later meets a cleaner at another junction. Find a shared rule that lets all three reach their targets.",
       "participant_prompt": "Run the scene, inspect what goes wrong, and decide whether the shared rulebook should be added to or refined.",
       "analysis": {
         "layer": 3,
@@ -4438,7 +4221,7 @@ window.TASK_LIBRARY = {
         "stage": "Sequential role-priority reuse",
         "evidence_function": "Two local conflicts have different locations and different pairs of roles, but share one priority structure. The operator has priority at both junctions; carrier and cleaner yield.",
         "expected_transition": "specific role rules -> one reusable non-operator priority rule",
-        "selected_variant": "one_way_sequential_priority",
+        "selected_variant": "wall_forced_sequential_priority",
         "nuisance_score": [
           2,
           15
@@ -4616,7 +4399,7 @@ window.TASK_LIBRARY = {
         }
       },
       "world": {
-        "name": "one_way_sequential_priority",
+        "name": "wall_forced_sequential_priority",
         "rows": 10,
         "cols": 10,
         "walls": [
@@ -4958,22 +4741,6 @@ window.TASK_LIBRARY = {
           {
             "zone": "cold",
             "contaminant": "spill"
-          }
-        ],
-        "one_way": [
-          {
-            "cell": [
-              4,
-              4
-            ],
-            "direction": "E"
-          },
-          {
-            "cell": [
-              4,
-              5
-            ],
-            "direction": "E"
           }
         ],
         "agents": [
@@ -5432,7 +5199,6 @@ window.TASK_LIBRARY = {
             "contaminant": "spill"
           }
         ],
-        "one_way": [],
         "agents": [
           {
             "id": 0,
@@ -5924,7 +5690,6 @@ window.TASK_LIBRARY = {
             "contaminant": "spill"
           }
         ],
-        "one_way": [],
         "agents": [
           {
             "id": 0,
@@ -6380,7 +6145,6 @@ window.TASK_LIBRARY = {
             "contaminant": "spill"
           }
         ],
-        "one_way": [],
         "agents": [
           {
             "id": 0,
@@ -6868,7 +6632,6 @@ window.TASK_LIBRARY = {
             "contaminant": "spill"
           }
         ],
-        "one_way": [],
         "agents": [
           {
             "id": 0,

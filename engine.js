@@ -75,10 +75,6 @@ function normalizeTask(task){
   (task.world.machines || []).forEach(machine => {
     machines[machine.id] = { ...machine, cell:machine.cell.slice() };
   });
-  const oneWay = {};
-  (task.world.one_way || []).forEach(row => {
-    oneWay[K(row.cell[0], row.cell[1])] = row.direction;
-  });
   const scanners = new Set((task.world.scanners || []).map(c => K(c[0], c[1])));
   return {
     id: task.id,
@@ -98,7 +94,6 @@ function normalizeTask(task){
     cols: task.world.cols,
     walls: new Set(task.world.walls.map(c => K(c[0], c[1]))),
     zones,
-    oneWay,
     protected: task.world.protected,
     items,
     machines,
@@ -127,11 +122,6 @@ function goalCell(task, agent){
 function zoneOf(world, cell){ return world.zones[K(cell[0],cell[1])] || "normal"; }
 function passable(world, cell){
   return cell[0] >= 0 && cell[1] >= 0 && cell[0] < world.rows && cell[1] < world.cols && !world.walls.has(K(cell[0],cell[1]));
-}
-function canMove(world, from, to, direction){
-  if(!passable(world, to)) return false;
-  const required = world.oneWay?.[K(from[0], from[1])];
-  return !required || required === direction;
 }
 function sameCell(a, b){ return a && b && a[0] === b[0] && a[1] === b[1]; }
 
@@ -229,7 +219,7 @@ function plan(world, agent, staticNorms){
 
     for(const d in DIRS){
       const nxt = [cur.cell[0] + DIRS[d][0], cur.cell[1] + DIRS[d][1]];
-      if(canMove(world, cur.cell, nxt, d) && !staticForbidden(world, agent, staticNorms, "MOVE", { cell:nxt, moveDir:d })){
+      if(passable(world, nxt) && !staticForbidden(world, agent, staticNorms, "MOVE", { cell:nxt, moveDir:d })){
         succ.push({
           step:{ kind:"move", cell:nxt, dir:d },
           state:{ ...cur, cell:nxt, heading:d },
@@ -343,7 +333,6 @@ function simulate(scn, rules){
     walls:scn.walls,
     zones:scn.zones,
     protected:scn.protected,
-    oneWay:scn.oneWay,
     items:JSON.parse(JSON.stringify(scn.items)),
     machines:scn.machines,
     scanners:scn.scanners,

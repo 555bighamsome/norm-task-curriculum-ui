@@ -42,7 +42,6 @@ def _static_world_signature(task):
         "protected": world["protected"],
         "machines": world["machines"],
         "scanners": world["scanners"],
-        "one_way": world.get("one_way", []),
     }
 
 

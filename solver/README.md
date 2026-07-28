@@ -40,9 +40,9 @@ late-trial single-rule       T6 has 240 canonical single-rule solutions; T7--T10
 ```
 
 The first five scenes establish precise cold-storage protection, a road
-convention, and machine-scoped carrier priority. T6 now introduces a genuine
-one-way passage and two successive pairwise conflicts: carrier/operator at the
-entrance, then operator/cleaner at the exit. Its local reference solution is
+convention, and machine-scoped carrier priority. In T6, walls create two
+successive pairwise conflicts: carrier/operator at the first junction, then
+operator/cleaner at the second. Its local reference solution is
 the compact role rule `contested AND robot IS NOT operator`; the exact solver
 also reports all other successful single-rule alternatives. T7--T9 are the
 original interaction and integrated scenes, and T10 remains the full

@@ -261,7 +261,7 @@ def facility_zones():
     }
 
 
-def make_world(name, changes, *, zones=None, machines=None, walls=None, one_way=None):
+def make_world(name, changes, *, zones=None, machines=None, walls=None):
     agents = [
         Agent(
             row["agent_id"],
@@ -279,7 +279,6 @@ def make_world(name, changes, *, zones=None, machines=None, walls=None, one_way=
         agents=sorted(agents, key=lambda agent: agent.id),
         machines=dict(machines or {}),
         protected=[("cold", "spill")],
-        one_way=dict(one_way or {}),
         T=80,
     )
 
@@ -474,11 +473,11 @@ def combined_road_machine_reuse_variants():
     ]
 
 
-def one_way_pairwise_variants():
-    """A directed passage creates two sequential, role-based conflicts.
+def sequential_pairwise_variants():
+    """Walls create two sequential, role-based conflicts.
 
     Carrier and operator meet at the first junction.  The operator then uses
-    the eastbound passage and meets the cleaner at a second junction.  The
+    the narrow passage and meets the cleaner at a second junction.  The
     carrier exits after the first junction, so no step contains a three-way
     contest or a carrier/cleaner contest.
     """
@@ -489,7 +488,7 @@ def one_way_pairwise_variants():
         (3, 3),
         # Carrier exits below the first junction.
         (5, 3),
-        # The operator turns south at the end of the one-way passage.
+        # The operator turns south at the end of the narrow passage.
         (5, 5),
         (5, 6),
         (5, 7),
@@ -510,7 +509,7 @@ def one_way_pairwise_variants():
     }
     return [
         make_world(
-            "one_way_sequential_priority",
+            "wall_forced_sequential_priority",
             [
                 change(0, (4, 2), (5, 3), role="carrier"),
                 change(1, (3, 3), (5, 8), role="operator"),
@@ -518,10 +517,6 @@ def one_way_pairwise_variants():
             ],
             zones={},
             walls=walls,
-            one_way={
-                (4, 4): "E",
-                (4, 5): "E",
-            },
         )
     ]
 
@@ -799,9 +794,10 @@ SHIFT_BLUEPRINTS = (
         "id": "trial_6",
         "participant_label": "T6",
         "participant_description": (
-            "Three robots use a one-way passage. A carrier and an operator meet "
-            "at the entrance, and the operator later meets a cleaner at the "
-            "exit. Find a shared rule that lets all three reach their targets."
+            "Three robots use a narrow warehouse route. A carrier and an "
+            "operator meet at the first junction, and the operator later meets "
+            "a cleaner at another junction. Find a shared rule that lets all "
+            "three reach their targets."
         ),
         "layer": 3,
         "prerequisites": ("trial_2",),
@@ -814,7 +810,7 @@ SHIFT_BLUEPRINTS = (
         "expected_transition": (
             "specific role rules -> one reusable non-operator priority rule"
         ),
-        "variants": one_way_pairwise_variants,
+        "variants": sequential_pairwise_variants,
         "optimality_reference": [NON_OPERATOR_PRIORITY],
         "contract": {
             "empty": (False, "collision"),

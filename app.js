@@ -107,7 +107,6 @@ function icon(name, extraClass=""){
   if(name === "machine") return `<svg ${base}><path ${fill} d="m9 2 3 2 3-2 2 3 3 1-.5 3.5L22 12l-2.5 2.5.5 3.5-3 1-2 3-3-2-3 2-2-3-3-1 .5-3.5L2 12l2.5-2.5L4 6l3-1 2-3Z"/><circle cx="12" cy="12" r="3.2" fill="#fff"/></svg>`;
   if(name === "wall") return `<svg ${base}><path ${fill} d="M3 4h7v5H3V4Zm9 0h9v5h-9V4ZM3 11h4v5H3v-5Zm6 0h8v5H9v-5Zm10 0h2v5h-2v-5ZM3 18h9v3H3v-3Zm11 0h7v3h-7v-3Z"/></svg>`;
   if(name === "floor") return `<svg ${base}><rect ${stroke} x="4" y="4" width="16" height="16" stroke-width="1.5"/></svg>`;
-  if(name === "one-way") return `<svg ${base}><path d="M4 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="square" stroke-linejoin="miter"/></svg>`;
   if(name === "reach") return `<svg ${base}><path ${fill} d="M10 2h4v7h7v4h-7v7h-4v-7H3V9h7V2Z"/></svg>`;
   if(name === "operate") return icon("machine", extraClass);
   if(name === "deliver") return icon("carrier", extraClass);
@@ -185,12 +184,6 @@ function spillBadge(agent, className=""){
 function zoneMarkup(zone){
   if(zone === "cold") return icon("cold", "board-zone-icon");
   return "";
-}
-
-const ONE_WAY_ARROWS = {N:"↑", S:"↓", E:"→", W:"←"};
-function oneWayArrowMarkup(direction, className=""){
-  const arrow = ONE_WAY_ARROWS[direction];
-  return arrow ? `<span class="one-way-arrow ${className}" aria-hidden="true">${arrow}</span>` : "";
 }
 
 function targetMarkup(agent, targetIndex=0, onMachine=false){
@@ -284,13 +277,6 @@ function sceneFeatureItems(task){
       iconName:"machine",
       title:"Machine",
       detail:"Only one robot can enter the machine square in a time step; it is released after use.",
-    },
-    {
-      id:"one-way",
-      present:Object.keys(task.oneWay || {}).length > 0,
-      iconName:"one-way",
-      title:"One-way passage",
-      detail:"Robots may move through the marked cells only in the arrow direction.",
     },
     {
       id:"target",
@@ -431,7 +417,6 @@ function sceneFullMapMarkup(task){
       const feature = machines.has(key)
         ? `<span class="picker-machine"><span class="picker-machine-icon">${icon("machine")}</span></span>`
         : "";
-      const oneWayMarkup = oneWayArrowMarkup(task.oneWay[key], "picker-one-way-arrow");
       const itemMarkup = items.map(item => `<span class="picker-item item-${item.colour}" aria-hidden="true"></span>`).join("");
       const targetMarkup = (targets.get(key) || []).map((agent, targetIndex) =>
         `<span class="picker-target picker-target-${targetIndex % 4}${machines.has(key) ? ` picker-target-on-machine picker-target-on-machine-${targetIndex % 4}` : ""}" style="--agent-color:${agentColor(agent)}" aria-hidden="true"><span class="picker-target-label picker-target-label-${targetIndex % 4}">${agent.id}</span></span>`
@@ -440,7 +425,7 @@ function sceneFullMapMarkup(task){
         `<span class="picker-agent ${agents.length > 1 ? "picker-agent-multi" : ""} picker-agent-index-${agentIndex}" style="--agent-color:${agentColor(agent)}" aria-hidden="true">${icon(roleIconName(agent.role), "picker-agent-icon")}<span class="picker-agent-id">${agent.id}</span>${agent.carrying === "spill" ? icon("spill", "picker-carry-icon") : ""}</span>`
       ).join("");
       const zoneMarkupText = !wall && zone === "cold" ? zoneMarkup("cold") : "";
-      cells.push(`<span class="picker-map-cell ${wall ? "picker-map-wall" : `picker-map-${zone}`}" aria-hidden="true">${wall ? "" : zoneMarkupText + oneWayMarkup + feature + itemMarkup + targetMarkup + agentMarkup}</span>`);
+      cells.push(`<span class="picker-map-cell ${wall ? "picker-map-wall" : `picker-map-${zone}`}" aria-hidden="true">${wall ? "" : zoneMarkupText + feature + itemMarkup + targetMarkup + agentMarkup}</span>`);
     }
   }
   return `<span class="scene-full-map" style="--map-cols:${task.cols};--map-rows:${task.rows}">${cells.join("")}</span>`;
@@ -463,7 +448,6 @@ function renderScenePickerKey(){
     ["cold", "Cold storage"],
     ["machine", "Machine"],
     ["spill", "Spill"],
-    ["one-way", "One-way passage"],
   ].map(([iconName, label]) =>
     `<div class="picker-key-tile"><span class="picker-key-symbol ${iconName}-symbol">${icon(iconName)}</span><span>${label}</span></div>`
   ).join("");
@@ -621,7 +605,7 @@ function buildBoard(){
     cell.dataset.cell = key;
     cell.setAttribute("aria-label", blocked ? "Wall" : (ZONE_ZH[visualZone] || visualZone));
     if(!blocked){
-      cell.innerHTML = zoneMarkup(visualZone) + oneWayArrowMarkup(scn.oneWay[key]);
+      cell.innerHTML = zoneMarkup(visualZone);
     }
     board.appendChild(cell);
   }
@@ -1334,7 +1318,6 @@ function renderLegend(){
     scn.walls.size ? legendTile(legendIcon("wall", "wall-sample"), "Wall", "Not available for movement", "wall-tile") : "",
     zoneSet.has("cold") ? legendTile(legendIcon("cold", "cold-sample"), "Cold storage", "A spill can contaminate it", "zone-tile cold") : "",
     Object.keys(scn.machines).length ? legendTile(legendIcon("machine", "machine-sample"), "Machine", "One robot enters at a time", "machine-tile") : "",
-    Object.keys(scn.oneWay || {}).length ? legendTile(legendIcon("one-way", "one-way-sample"), "One-way passage", "Arrow shows the allowed direction", "one-way-tile") : "",
     hasSpill ? legendTile(legendIcon("spill", "spill-sample"), "Spill", "Carried by a robot", "item-tile") : "",
   ].filter(Boolean).join("");
 
