@@ -36,12 +36,10 @@ const FREE_ORDER = ORDER_MODE === "free";
 
 function taskUnlocked(task){
   if(FREE_ORDER) return true;
-  const prerequisites = task.prerequisites || [];
-  if(!prerequisites.length) return true;
-  return prerequisites.every(id => {
-    const state = shiftStates[id];
-    return state && state.lastOk;
-  });
+  const index = TASKS.indexOf(task);
+  if(index <= 0) return true;
+  const previous = TASKS[index - 1];
+  return shiftStates[previous.id]?.lastOk === true;
 }
 
 function unlockedTasks(){
@@ -526,7 +524,7 @@ function buildTabs(){
     button.innerHTML = `<span class="scene-number">${task.label}</span><span class="scene-mark" aria-hidden="true">${mark}</span>`;
     button.disabled = locked;
     button.title = locked
-      ? `${task.label}: solve its prerequisite scenes first`
+      ? `${task.label}: complete the previous scene first`
       : !state.visited
       ? `${task.label}: not yet run`
       : `${task.label}: ${state.lastOk ? "solved" : "not solved"}`;

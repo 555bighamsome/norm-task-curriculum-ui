@@ -20,9 +20,10 @@ file:///Users/kiki/Agent%20social/norm-task/index.html
 - typed conditions with `IS`, `IS NOT`, and `AND`;
 - an exact compositional baseline over the same grammar shown to participants.
 
-The curriculum moves from independent rule discovery to counterexample-driven
-refinement and later reuse. Each scene is tested on its own; the task does not
-require a single rulebook to solve every scene.
+The curriculum unlocks one scene at a time, moving from independent rule
+discovery to counterexample-driven refinement and later reuse. Each scene is
+tested on its own; the task does not require a single rulebook to solve every
+scene.
 
 Current exact calibration:
 
@@ -67,5 +68,5 @@ Generated browser data:
 - `data/tasks.generated.js`
 
 Use `index.html?debug=1` for researcher controls and event-log export. The
-default page uses prerequisite-frontier curriculum order. Use
+default page uses linear curriculum order. Use
 `index.html?order=free` to expose every scene for test calibration.
