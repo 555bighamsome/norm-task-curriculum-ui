@@ -215,7 +215,7 @@ const introducedFeatures = new Set();
 
 const SCENE_GUIDES = {
   trial_1: {
-    title:"Cold storage and spills",
+    title:"New map element",
   },
   trial_3: {
     title:"Shared machines",
@@ -226,7 +226,7 @@ const SCENE_GUIDES = {
 };
 
 const GUIDE_COPY = {
-  cold:"A spill contaminates this square.",
+  cold:"",
   machine:"Enter to use it; one robot per step, then it retreats.",
   operator:"Prepares a setup machine before a Carrier uses it.",
   cleaner:"Can carry a spill into cold storage without contamination.",
@@ -240,7 +240,7 @@ function sceneFeatureItems(task){
       id:"cold",
       present:hasCold,
       iconName:"cold",
-      title:"Cold storage",
+      title:"Cold storage square",
       detail:GUIDE_COPY.cold,
     },
     {
@@ -279,7 +279,7 @@ function guideFeatureMarkup(feature){
   }else{
     symbol = legendIcon(feature.iconName, feature.legendClass || `${feature.iconName}-sample`);
   }
-  return `<div class="guide-item">${symbol}<span><strong>${feature.title}</strong><small>${feature.detail}</small></span></div>`;
+  return `<div class="guide-item">${symbol}<span><strong>${feature.title}</strong>${feature.detail ? `<small>${feature.detail}</small>` : ""}</span></div>`;
 }
 
 function sceneHasGuide(task){
@@ -1270,7 +1270,7 @@ function renderLegend(){
   const environmentTiles = [
     legendTile(legendIcon("floor", "floor-sample"), "Available square", "", "floor-tile"),
     scn.walls.size ? legendTile(legendIcon("wall", "wall-sample"), "Wall", "", "wall-tile") : "",
-    zoneSet.has("cold") ? legendTile(legendIcon("cold", "cold-sample"), "Cold storage", GUIDE_COPY.cold, "zone-tile cold") : "",
+    zoneSet.has("cold") ? legendTile(legendIcon("cold", "cold-sample"), "Cold storage square", "", "zone-tile cold") : "",
     Object.keys(scn.machines).length ? legendTile(legendIcon("machine", "machine-sample"), "Machine", GUIDE_COPY.machine, "machine-tile") : "",
     hasSpill ? legendTile(legendIcon("spill", "spill-sample"), "Spill", "", "item-tile") : "",
   ].filter(Boolean).join("");
@@ -1349,7 +1349,7 @@ function feedbackCellType(cell){
   if(Object.values(scn.machines).some(machine => sameCell(machine.cell, cell))){
     return "machine square";
   }
-  if(scn.zones[K(cell[0], cell[1])] === "cold") return "cold-storage square";
+  if(scn.zones[K(cell[0], cell[1])] === "cold") return "cold storage square";
   return "available square";
 }
 
@@ -1394,9 +1394,10 @@ function buildRunFeedback(result){
   }
 
   if(result.reason?.startsWith("pollution:")){
+    const robotNames = ids.map(id => `Robot ${id}`).join(" and ");
     return {
       title:"Not solved",
-      observation:`Step ${step}: ${robots} entered the ${square} and contaminated it.`,
+      observation:`Step ${step}: ${robotNames} entered the ${square} while carrying a spill. The square was contaminated.`,
       kind:"bad",
     };
   }

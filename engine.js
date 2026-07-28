@@ -36,7 +36,7 @@ const LABEL_ZH = {
 
 const ROLE_ZH = { carrier:"Carrier", cleaner:"Cleaner", operator:"Operator" };
 const CARRY_ZH = { none:"none", spill:"spill", glass:"glass", valuable:"valuable item" };
-const ZONE_ZH = { cold:"Cold storage", fragile:"Fragile zone", secure:"Secure zone", intersection:"Bottleneck", normal:"Available square" };
+const ZONE_ZH = { cold:"Cold storage square", fragile:"Fragile zone", secure:"Secure zone", intersection:"Bottleneck", normal:"Available square" };
 const ITEM_ZH = { red:"red item", blue:"blue item" };
 const MACHINE_ZH = { packer:"Packer", sealer:"Sealer" };
 
