@@ -1704,6 +1704,10 @@ body.tutorial-active{overflow:hidden;}
   gap:40px;
   padding:26px 28px 30px;
 }
+.tut-body.has-rule-practice{
+  grid-template-columns:minmax(0,1fr) minmax(0,520px);
+  gap:32px;
+}
 .tut-copy{min-width:0;}
 .tut-copy h2{margin:0 0 10px;font-size:22px;line-height:1.25;font-weight:700;}
 .tut-lead{margin:0 0 15px;color:#41484f;font-size:16px;line-height:1.55;}
@@ -1722,20 +1726,20 @@ body.tutorial-active{overflow:hidden;}
 }
 .tut-board{position:relative;}
 .tut-feedback{
-  min-height:44px;
-  margin-top:12px;
-  padding:9px 12px;
-  border-left:3px solid #d3d7dc;
-  background:#f7f8f9;
+  min-height:34px;
+  margin-top:8px;
+  padding:7px 0;
+  border-bottom:1px solid #d8dce1;
+  background:transparent;
   font-size:13px;
   line-height:1.5;
 }
-.tut-feedback:empty{background:transparent;border-left-color:transparent;}
-.tut-feedback strong{display:block;font-size:13px;}
+.tut-feedback:empty{border-bottom-color:transparent;}
+.tut-feedback strong{display:inline;margin-right:8px;font-size:13px;}
 .tut-feedback span{color:#555d65;}
-.tut-feedback.ok{border-left-color:#0f6e56;background:#eef6f3;}
+.tut-feedback.ok{background:transparent;}
 .tut-feedback.ok strong{color:#0f6e56;}
-.tut-feedback.bad{border-left-color:#a32d2d;background:#fbf0f0;}
+.tut-feedback.bad{background:transparent;}
 .tut-feedback.bad strong{color:#a32d2d;}
 .tut-controls{display:flex;align-items:center;gap:14px;margin-top:12px;flex-wrap:wrap;}
 .tut-controls[hidden]{display:none;}
@@ -1878,7 +1882,7 @@ body.tutorial-active{overflow:hidden;}
   font-weight:800;
 }
 .tut-practice-editor select,.tut-practice-editor button,
-.tut-change-condition,.tut-save-from-rule,.tut-library-demo button{
+.tut-change-condition,.tut-library-demo button{
   min-width:0;
   height:34px;
   border:1px solid #9da4ac;
@@ -1915,14 +1919,6 @@ body.tutorial-active{overflow:hidden;}
   gap:12px;
   margin:7px 0 9px 55px;
 }
-.tut-save-from-rule{
-  flex:0 0 auto;
-  padding:0 10px;
-  cursor:pointer;
-}
-.tut-save-from-rule.tut-next-action{border-color:#185fa5;background:#185fa5;color:#fff;font-weight:700;}
-.tut-save-from-rule.tut-next-action:hover{background:#174e80;}
-.tut-save-from-rule:disabled{cursor:default;opacity:.45;}
 .tut-rule-cond.completed b{color:#185fa5;font-weight:600;}
 .tut-practice-help{
   margin:10px 0 0;
@@ -1931,6 +1927,7 @@ body.tutorial-active{overflow:hidden;}
   font-size:11px;
   line-height:1.45;
 }
+.tut-practice-help:empty{display:none;}
 
 .tut-library-demo{
   display:grid;
@@ -1941,22 +1938,19 @@ body.tutorial-active{overflow:hidden;}
   display:flex;
   align-items:center;
   gap:9px;
-  margin:0 0 10px;
-  padding:9px 10px;
-  border-left:3px solid #185fa5;
-  background:#edf5fc;
-  color:#174e80;
-  font-size:12px;
+  margin:0 0 8px;
+  color:#59616a;
+  font-size:11px;
   line-height:1.35;
 }
 .tut-library-instruction span{
   flex:0 0 auto;
-  color:#174e80;
+  color:#25292d;
   font-weight:800;
 }
 .tut-library-instruction strong{font-weight:700;}
-.tut-library-instruction.is-complete{border-left-color:#0f6e56;background:#eef6f3;color:#0f6e56;}
-.tut-library-instruction.is-complete span{color:#0f6e56;}
+.tut-library-instruction.is-complete{color:#59616a;}
+.tut-library-instruction.is-complete span{color:#25292d;}
 .tut-library-demo section{min-width:0;}
 .tut-library-demo h3{
   margin:0 0 8px;
@@ -1965,7 +1959,7 @@ body.tutorial-active{overflow:hidden;}
   font-size:12px;
 }
 .tut-library-rule{
-  min-height:70px;
+  min-height:62px;
   padding:10px;
   border:1px solid #cfd4da;
   color:#30363c;
@@ -1980,7 +1974,7 @@ body.tutorial-active{overflow:hidden;}
 }
 .tut-saved-row{
   display:grid;
-  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-columns:minmax(0,1fr);
   gap:10px;
   align-items:start;
   padding:10px 0;
@@ -1989,9 +1983,7 @@ body.tutorial-active{overflow:hidden;}
   font-size:11px;
   line-height:1.4;
 }
-.tut-saved-row button{height:30px;padding:0 10px;cursor:pointer;}
-.tut-saved-row button.tut-next-action{border-color:#185fa5;background:#185fa5;color:#fff;font-weight:700;}
-.tut-saved-row button.tut-next-action:hover{background:#174e80;}
+.tut-saved-row button{width:max-content;height:30px;padding:0 10px;cursor:pointer;}
 .tut-library-empty{margin:0;padding:10px 0;color:#7a828a;font-size:11px;}
 
 .onboarding-footer{

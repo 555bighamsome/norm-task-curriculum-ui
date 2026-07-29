@@ -150,12 +150,10 @@ const PAGES = [
     title:"Build, test, and refine a rule",
     lead:"Entering the marked square causes this practice scene to fail. Build a rule that prevents the robot from entering it.",
     points:[
-      "A condition has three fields: object, IS / IS NOT, and fact.",
-      "Select Practice object, IS, and marked; then select Add condition.",
-      "Press Run to test the rule. You may save a useful rule to the library for later reuse.",
-      "Within one rule, conditions are joined by AND: all must be true.",
-      "Use Add Rule for a separate rule. A move is forbidden if any active rule matches it.",
-      "Every active rule is shared: every robot in that scene follows it.",
+      "Choose an object, IS / IS NOT, and a fact; then select Add condition.",
+      "Conditions within one rule are joined by AND, so all of them must be true.",
+      "Add Rule creates a separate rule. A move is forbidden when any active rule matches it.",
+      "Every active rule applies to every robot in the scene.",
     ],
     scene:RULE_PRACTICE_SCENE,
     controls:true,
@@ -165,18 +163,17 @@ const PAGES = [
   },
   {
     id:"library",
-    title:"Reuse a rule in a new scene",
-    lead:"The same marked-square problem now appears in a different layout.",
+    title:"Save and reuse a rule",
+    lead:"The library is optional. Use it when you want to carry a rule into another scene.",
     points:[
-      "Saving a rule is optional. Rules you do save remain available throughout the whole task, across every scene.",
-      "A saved rule is not active in a new scene until you add it to that scene's rulebook.",
-      "Select Add to rulebook, then press Run.",
+      "Save to library keeps a copy available throughout the rest of the task.",
+      "A saved rule is not active in a new scene automatically.",
+      "To reuse it, select Add to rulebook. You can then run the scene to test it.",
     ],
     scene:RULE_REUSE_SCENE,
     controls:true,
     initialNote:"This is a new scene. No rules are active yet.",
     reference:"library",
-    requires:"reuse_if_saved",
   },
 ];
 
@@ -457,8 +454,7 @@ function practiceConditionText(operator, term){
 function updateContinueState(){
   const requirement = PAGES[state.page].requires;
   el("tut-continue").disabled =
-    (requirement === "practice_solved" && !state.practiceSolved) ||
-    (requirement === "reuse_if_saved" && state.practiceSaved && !state.reuseSolved);
+    (requirement === "practice_solved" && !state.practiceSolved);
 }
 
 function bindRulePractice(){
@@ -505,23 +501,20 @@ function ruleReferenceMarkup(){
     ? {label:"Step 1", text:"Choose Practice object, IS, and marked. Then click Add condition."}
     : !state.practiceSolved
       ? {label:"Step 2", text:"Click Run to test the rule."}
-      : !state.practiceSaved
-        ? {label:"Optional", text:"The rule worked. Save it to the library to see how reuse works in the next example."}
-        : {label:"Saved", text:"Continue to learn how to add this saved rule to a new scene."};
+      : null;
   return `
-    <div class="tut-rule-instruction ${state.practiceSaved ? "is-complete" : ""}">
-      <span>${step.label}</span>
-      <strong>${step.text}</strong>
-    </div>
+    ${step ? `
+      <div class="tut-rule-instruction">
+        <span>${step.label}</span>
+        <strong>${step.text}</strong>
+      </div>
+    ` : ""}
     <div class="tut-rule-example tut-rule-builder" aria-label="Practice rule builder">
       <div class="tut-rule-action"><span>FORBID</span><strong>MOVE INTO A SQUARE</strong></div>
       ${condition ? `
         <div class="tut-rule-cond completed"><span>WHEN</span><b>${condition.text}</b></div>
         <div class="tut-practice-rule-actions">
           <button class="tut-change-condition" id="tut-change-condition" type="button">Change condition</button>
-          <button class="tut-save-from-rule ${state.practiceSolved && !state.practiceSaved ? "tut-next-action" : ""}" id="tut-save-from-rule" type="button" ${state.practiceSaved ? "disabled" : ""}>
-            ${state.practiceSaved ? "Saved to library" : "Save to library"}
-          </button>
         </div>
       ` : `
         <div class="tut-practice-editor">
@@ -543,13 +536,9 @@ function ruleReferenceMarkup(){
       `}
     </div>
     <p class="tut-practice-help">${condition
-      ? state.practiceSolved && state.practiceSaved
-        ? "The rule worked and is saved. Continue to see the library in a new scene."
-        : state.practiceSolved
-          ? "The rule worked. You can continue now, or save it to the library to reuse it in the next example."
-          : state.practiceSaved
-            ? "The rule is saved. Press Run to check whether it solves this scene."
-            : "Condition added. Press Run to test it; use Change condition if it does not work."
+      ? state.practiceSolved
+        ? ""
+        : "Condition added. Press Run to test it; use Change condition if it does not work."
       : "Run without a rule to observe the problem, then build the practice rule."}</p>
   `;
 }
@@ -560,27 +549,30 @@ function libraryReferenceMarkup(){
     return `
       <div class="tut-library-instruction">
         <span>Optional</span>
-        <strong>The library is empty because no rule was saved in the previous scene.</strong>
+        <strong>Save the rule from the previous scene to make it available here, or start the task without saving it.</strong>
       </div>
       <div class="tut-library-demo">
         <section>
-          <h3>Rules in this scene</h3>
-          <p class="tut-library-empty">No active rules.</p>
+          <h3>Rule from the previous scene</h3>
+          <div class="tut-library-rule">
+            <div><span>FORBID</span> MOVE INTO A SQUARE</div>
+            <div><span>WHEN</span> ${text}</div>
+          </div>
+          <button id="tut-save-practice" type="button">Save to library</button>
         </section>
         <section>
           <h3>Saved rule library</h3>
           <p class="tut-library-empty">No saved rules.</p>
         </section>
       </div>
-      <p class="tut-practice-help">In the task, save a rule only when you want to use it again in a later scene. You can also build a new rule from scratch.</p>
     `;
   }
   return `
     <div class="tut-library-instruction ${state.practiceUsed ? "is-complete" : ""}">
-      <span>${state.practiceUsed ? "Added" : "Step 1"}</span>
+      <span>${state.practiceUsed ? "Added" : "Saved"}</span>
       <strong>${state.practiceUsed
         ? "The saved rule is now in this scene's rulebook."
-        : "In Saved rule library, click Add to rulebook."}</strong>
+        : "The rule remains in the library. Add it to this scene's rulebook if you want to test it here."}</strong>
     </div>
     <div class="tut-library-demo">
       <section>
@@ -602,15 +594,19 @@ function libraryReferenceMarkup(){
         </div>
       </section>
     </div>
-    <p class="tut-practice-help">${state.reuseSolved
-      ? "The reused rule worked in the new layout. It remains saved in the library."
-      : state.practiceUsed
-        ? "A copy of the saved rule is now active in this scene. Press Run to test it."
-        : "Select Add to rulebook to copy the saved rule into this scene."}</p>
   `;
 }
 
 function bindLibraryPractice(){
+  const save = el("tut-save-practice");
+  if(save){
+    save.onclick = () => {
+      state.practiceSaved = true;
+      emit("tutorial_library_saved", {condition:state.practiceCondition?.text || null});
+      renderReference("library");
+      updateContinueState();
+    };
+  }
   const use = el("tut-use-practice");
   if(use){
     use.onclick = () => {
@@ -634,15 +630,6 @@ function renderReference(kind){
     host.innerHTML = ruleReferenceMarkup();
     bindRulePractice();
     const change = el("tut-change-condition");
-    const save = el("tut-save-from-rule");
-    if(save){
-      save.onclick = () => {
-        state.practiceSaved = true;
-        emit("tutorial_library_saved", {condition:state.practiceCondition?.text || null});
-        renderReference("rule");
-        updateContinueState();
-      };
-    }
     if(change){
       change.onclick = () => {
         state.practiceCondition = null;
@@ -684,6 +671,10 @@ function renderPage(index){
   const visual = el("tut-visual");
   const ruleReference = el("tut-rule-reference");
   document.querySelector(".tut-panel")?.classList.toggle(
+    "has-rule-practice",
+    page.id === "rules" || page.id === "library",
+  );
+  document.querySelector(".tut-body")?.classList.toggle(
     "has-rule-practice",
     page.id === "rules" || page.id === "library",
   );
