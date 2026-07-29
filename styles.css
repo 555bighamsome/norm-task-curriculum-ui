@@ -1847,12 +1847,26 @@ body.tutorial-active{overflow:hidden;}
 .tut-key-wall{background:#202823;color:#aab6ad;}
 .tut-key-floor .ui-icon,.tut-key-wall .ui-icon{width:23px;height:23px;}
 
-.tut-practice-label{
-  margin-bottom:-14px;
-  color:#69717a;
-  font-size:11px;
-  line-height:1.4;
+.tut-rule-instruction{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin:0 0 10px;
+  padding:9px 10px;
+  border-left:3px solid #185fa5;
+  background:#edf5fc;
+  color:#174e80;
+  font-size:12px;
+  line-height:1.35;
 }
+.tut-rule-instruction span{
+  flex:0 0 auto;
+  color:#174e80;
+  font-weight:800;
+}
+.tut-rule-instruction strong{font-weight:700;}
+.tut-rule-instruction.is-complete{border-left-color:#0f6e56;background:#eef6f3;color:#0f6e56;}
+.tut-rule-instruction.is-complete span{color:#0f6e56;}
 .tut-rule-builder{border-bottom:1px solid #bfc4c9;}
 .tut-practice-editor{
   display:grid;
@@ -1909,6 +1923,8 @@ body.tutorial-active{overflow:hidden;}
   padding:0 10px;
   cursor:pointer;
 }
+.tut-save-from-rule.tut-next-action{border-color:#185fa5;background:#185fa5;color:#fff;font-weight:700;}
+.tut-save-from-rule.tut-next-action:hover{background:#174e80;}
 .tut-save-from-rule:disabled{cursor:default;opacity:.45;}
 .tut-rule-cond.completed b{color:#185fa5;font-weight:600;}
 .tut-practice-help{
@@ -2043,4 +2059,3 @@ body.tutorial-active{overflow:hidden;}
   gap:12px;
   padding:11px 0 0;
 }
-.tut-panel.has-rule-practice .tut-practice-label{margin-bottom:-5px;}

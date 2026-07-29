@@ -168,8 +168,8 @@ const PAGES = [
     title:"Reuse a rule in a new scene",
     lead:"The same marked-square problem now appears in a different layout.",
     points:[
-      "The rule saved in the previous scene is still in the library.",
-      "It is not active in this new scene yet.",
+      "Rules saved in the library remain available throughout the whole task, across every scene.",
+      "A saved rule is not active in a new scene until you add it to that scene's rulebook.",
       "Select Add to rulebook, then press Run.",
       "In the task, reused rules should still be tested and revised when necessary.",
     ],
@@ -502,15 +502,25 @@ function bindRulePractice(){
 
 function ruleReferenceMarkup(){
   const condition = state.practiceCondition;
+  const step = !condition
+    ? {label:"Step 1", text:"Choose Practice object, IS, and marked. Then click Add condition."}
+    : !state.practiceSolved
+      ? {label:"Step 2", text:"Click Run to test the rule."}
+      : !state.practiceSaved
+        ? {label:"Step 3", text:"The rule worked. Click Save to library."}
+        : {label:"Saved", text:"Continue to learn how to add this saved rule to a new scene."};
   return `
-    <div class="tut-practice-label">Practice only — this rule will not enter the task.</div>
+    <div class="tut-rule-instruction ${state.practiceSaved ? "is-complete" : ""}">
+      <span>${step.label}</span>
+      <strong>${step.text}</strong>
+    </div>
     <div class="tut-rule-example tut-rule-builder" aria-label="Practice rule builder">
       <div class="tut-rule-action"><span>FORBID</span><strong>MOVE INTO A SQUARE</strong></div>
       ${condition ? `
         <div class="tut-rule-cond completed"><span>WHEN</span><b>${condition.text}</b></div>
         <div class="tut-practice-rule-actions">
           <button class="tut-change-condition" id="tut-change-condition" type="button">Change condition</button>
-          <button class="tut-save-from-rule" id="tut-save-from-rule" type="button" ${state.practiceSaved ? "disabled" : ""}>
+          <button class="tut-save-from-rule ${state.practiceSolved && !state.practiceSaved ? "tut-next-action" : ""}" id="tut-save-from-rule" type="button" ${state.practiceSaved ? "disabled" : ""}>
             ${state.practiceSaved ? "Saved to library" : "Save to library"}
           </button>
         </div>
