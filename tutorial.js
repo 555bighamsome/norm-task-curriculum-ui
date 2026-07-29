@@ -171,7 +171,6 @@ const PAGES = [
       "Rules saved in the library remain available throughout the whole task, across every scene.",
       "A saved rule is not active in a new scene until you add it to that scene's rulebook.",
       "Select Add to rulebook, then press Run.",
-      "In the task, reused rules should still be tested and revised when necessary.",
     ],
     scene:RULE_REUSE_SCENE,
     controls:true,
