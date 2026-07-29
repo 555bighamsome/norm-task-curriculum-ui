@@ -243,9 +243,17 @@ ANCHOR_RULEBOOKS = {
         SCOPED_YIELD_EAST,
         MACHINE_NON_OPERATOR_PRIORITY,
     ],
+    "road_and_machine": [
+        YIELD_EAST,
+        MACHINE_NON_OPERATOR_PRIORITY,
+    ],
     "protect_and_scoped_road": [
         NEGATED_EXCEPTION,
         SCOPED_YIELD_EAST,
+    ],
+    "protect_and_road": [
+        NEGATED_EXCEPTION,
+        YIELD_EAST,
     ],
     "protect_and_machine": [
         NEGATED_EXCEPTION,
@@ -253,19 +261,19 @@ ANCHOR_RULEBOOKS = {
     ],
     "complete_rulebook": [
         NEGATED_EXCEPTION,
-        SCOPED_YIELD_EAST,
+        YIELD_EAST,
         MACHINE_NON_OPERATOR_PRIORITY,
     ],
     "compact_rulebook": [
         NEGATED_EXCEPTION,
-        SCOPED_YIELD_EAST,
+        YIELD_EAST,
         MACHINE_NON_OPERATOR_PRIORITY,
     ],
 }
 
 GROUND_TRUTH_RULEBOOK = [
     NEGATED_EXCEPTION,
-    SCOPED_YIELD_EAST,
+    YIELD_EAST,
     MACHINE_NON_OPERATOR_PRIORITY,
 ]
 
@@ -595,6 +603,69 @@ def safety_rule_reuse_variants():
     ]
 
 
+def _compact_composition_world(name, *, safety=False, road=False, machine=False):
+    """Build a connected, low-load warehouse from familiar event modules."""
+    open_cells = set()
+    changes = []
+    zones = {}
+    machines = {}
+    next_agent_id = 0
+
+    if road or machine:
+        # A top aisle joins the road crossing to the machine area.
+        open_cells.update((2, col) for col in range(1, 9))
+    if road:
+        open_cells.update({(1, 2), (3, 2)})
+        changes.extend([
+            change(next_agent_id, (2, 1), (2, 2), role="carrier"),
+            change(next_agent_id + 1, (1, 2), (3, 2), role="operator"),
+        ])
+        next_agent_id += 2
+    if machine:
+        open_cells.update({(1, 7), (3, 7)})
+        machines["sealer"] = Machine("sealer", (2, 7), setup_role="operator")
+        changes.extend([
+            # Different approach directions prevent the road convention from
+            # accidentally resolving the machine conflict.
+            operate(next_agent_id, (3, 7), "sealer", role="carrier"),
+            operate(next_agent_id + 1, (2, 8), "sealer", role="operator"),
+        ])
+        next_agent_id += 2
+    if safety:
+        # Three linked aisles make a short detour available around cold storage.
+        for row in (6, 7, 8):
+            open_cells.update((row, col) for col in range(1, 9))
+        zones[(7, 3)] = "cold"
+        changes.extend([
+            change(next_agent_id, (7, 1), (7, 8), role="carrier", carrying="spill"),
+            change(next_agent_id + 1, (6, 3), (7, 4), role="cleaner", carrying="spill"),
+        ])
+        # This unused aisle connects the modules visually as one warehouse
+        # without adding another interaction to solve.
+        if road or machine:
+            open_cells.update((row, 8) for row in range(3, 7))
+
+    return make_world(
+        name,
+        changes,
+        zones=zones,
+        machines=machines,
+        walls=walls_from_open(open_cells),
+    )
+
+
+def safety_road_composition_variants():
+    return [_compact_composition_world("safety_and_road", safety=True, road=True)]
+
+
+def safety_machine_composition_variants():
+    return [_compact_composition_world("safety_and_machine", safety=True, machine=True)]
+
+
+def road_machine_composition_variants():
+    return [_compact_composition_world("road_and_machine", road=True, machine=True)]
+
+
 def repeated_road_convention_variants():
     """Two road conflicts share direction but not role or opposing direction."""
     open_cells = {
@@ -693,87 +764,18 @@ def scoped_context_variants():
 
 
 def integrated_variants():
-    """A final scene requires all three previously learned rule families."""
-    final_open = {
-        # Two harmful cold-storage routes with short detours.
-        (2, 1), (2, 2), (2, 3),
-        (1, 1), (1, 2), (1, 3),
-        (3, 4), (3, 5), (3, 6),
-        (4, 4), (4, 5), (4, 6),
-        # Legitimate cleaner and clean-cargo entries.
-        (1, 8), (2, 8), (3, 8), (4, 8),
-        # Two ordinary crossings.
-        (6, 1), (6, 2), (6, 3), (5, 2), (7, 2),
-        (6, 6), (6, 7), (6, 8), (5, 7), (7, 7),
-        # Two setup machines with swapped approach directions.
-        (8, 3), (8, 4), (9, 4),
-        (8, 6), (8, 7), (9, 7),
-    }
+    """A compact final scene requiring the three learned rule families.
+
+    It contains one instance of each earlier problem type rather than several
+    duplicate conflicts. The difficulty is selecting and combining cached
+    rules, not parsing a crowded map.
+    """
     return [
-        make_world(
+        _compact_composition_world(
             "integrated_shared_system",
-            [
-                change(
-                    0,
-                    (2, 1),
-                    (2, 3),
-                    role="operator",
-                    carrying="spill",
-                ),
-                change(
-                    1,
-                    (3, 6),
-                    (3, 4),
-                    role="carrier",
-                    carrying="spill",
-                ),
-                change(
-                    2,
-                    (1, 8),
-                    (2, 8),
-                    role="cleaner",
-                    carrying="spill",
-                ),
-                change(
-                    3,
-                    (4, 8),
-                    (3, 8),
-                    role="carrier",
-                    carrying="none",
-                ),
-                # Road conflict A: an eastbound carrier yields.
-                change(4, (6, 1), (6, 2), role="carrier"),
-                change(5, (5, 2), (7, 2), role="operator"),
-                # Road conflict B: an eastbound operator yields.
-                change(6, (6, 6), (6, 7), role="operator"),
-                change(7, (5, 7), (7, 7), role="carrier"),
-                # Machine A: a northbound carrier yields to an eastbound
-                # operator.
-                operate(8, (9, 4), "sealer", role="carrier"),
-                operate(9, (8, 3), "sealer", role="operator"),
-                # Machine B swaps the roles of those approach directions.
-                operate(10, (8, 6), "packer", role="cleaner"),
-                operate(11, (9, 7), "packer", role="operator"),
-            ],
-            zones={
-                (2, 2): "cold",
-                (3, 5): "cold",
-                (2, 8): "cold",
-                (3, 8): "cold",
-            },
-            machines={
-                "sealer": Machine(
-                    "sealer",
-                    (8, 4),
-                    setup_role="operator",
-                ),
-                "packer": Machine(
-                    "packer",
-                    (8, 7),
-                    setup_role="operator",
-                ),
-            },
-            walls=walls_from_open(final_open),
+            safety=True,
+            road=True,
+            machine=True,
         )
     ]
 
@@ -928,126 +930,123 @@ SHIFT_BLUEPRINTS = (
         "id": "trial_7",
         "participant_label": "T7",
         "participant_description": (
-            "Four robots must reach their targets through two shared crossings."
+            "Four robots must reach their targets through cold storage and a shared crossing."
         ),
         "layer": 3,
-        "prerequisites": ("trial_2",),
-        "stage": "Road-convention reuse",
+        "prerequisites": ("trial_5", "trial_2"),
+        "stage": "Safety and road reuse",
         "evidence_function": (
-            "Two crossings share one direction convention but involve different "
-            "roles and different opposing directions."
+            "A familiar safety event and a familiar road conflict occur in one "
+            "small warehouse. Both earlier rules are needed, with no new rule "
+            "type introduced."
         ),
         "expected_transition": (
-            "retrieve one direction convention instead of enumerating roles"
+            "retrieve the safety and road rules together"
         ),
-        "variants": repeated_road_convention_variants,
-        "optimality_reference": [YIELD_EAST],
+        "variants": safety_road_composition_variants,
+        "optimality_reference": [NEGATED_EXCEPTION, YIELD_EAST],
         "shortcut_rulebooks": (
-            [YIELD_EAST_CARRIER, YIELD_EAST_CLEANER],
+            [CARRIER_PROTECTION, OPERATOR_PROTECTION, YIELD_EAST],
         ),
         "contract": {
-            "empty": (False, "collision"),
-            "yield_east": (True, "ok"),
-            "yield_east_by_role": (True, "ok"),
-            "broad_carrier_priority": (False, "collision"),
-            "non_operator_priority": (False, "timeout"),
+            "empty": (False, None),
+            "protect_and_road": (True, "ok"),
+            "negated_exception": (False, "collision"),
+            "yield_east": (False, "pollution"),
         },
     },
     {
         "id": "trial_8",
         "participant_label": "T8",
         "participant_description": (
-            "Four robots must complete their targets at two setup machines."
+            "Four robots must complete their targets at cold storage and a setup machine."
         ),
         "layer": 3,
-        "prerequisites": ("trial_3",),
-        "stage": "Machine-priority reuse",
+        "prerequisites": ("trial_5", "trial_3"),
+        "stage": "Safety and machine reuse",
         "evidence_function": (
-            "The same operator-first priority works for two machines even though "
-            "the waiting robot's role and approach direction change."
+            "A familiar safety event and a familiar operator-first machine event "
+            "occur together. Both earlier rules are needed."
         ),
         "expected_transition": (
-            "retrieve one role priority instead of enumerating roles or directions"
+            "retrieve the safety and machine rules together"
         ),
-        "variants": repeated_machine_priority_variants,
-        "optimality_reference": [NON_OPERATOR_PRIORITY],
+        "variants": safety_machine_composition_variants,
+        "optimality_reference": [NEGATED_EXCEPTION, MACHINE_NON_OPERATOR_PRIORITY],
         "shortcut_rulebooks": (
-            [BROAD_CARRIER_PRIORITY, MACHINE_CLEANER_CONTEST],
+            [CARRIER_PROTECTION, OPERATOR_PROTECTION, MACHINE_NON_OPERATOR_PRIORITY],
         ),
         "contract": {
-            "empty": (False, "resource-conflict"),
-            "non_operator_priority": (True, "ok"),
-            "machine_priority_by_role": (True, "ok"),
-            "broad_carrier_priority": (False, "resource-conflict"),
-            "yield_east": (False, "resource-conflict"),
+            "empty": (False, None),
+            "protect_and_machine": (True, "ok"),
+            "negated_exception": (False, "resource-conflict"),
+            "machine_non_operator_priority": (False, "pollution"),
         },
     },
     {
         "id": "trial_9",
         "participant_label": "T9",
         "participant_description": (
-            "Eight robots must complete their targets across ordinary crossings "
-            "and setup machines."
+            "Four robots must complete their targets across a shared crossing and a setup machine."
         ),
         "layer": 3,
-        "prerequisites": ("trial_7", "trial_8"),
-        "stage": "Context refinement",
+        "prerequisites": ("trial_2", "trial_3"),
+        "stage": "Road and machine reuse",
         "evidence_function": (
-            "The road and machine conventions conflict unless each is restricted "
-            "to the kind of target square where it belongs."
+            "A familiar road conflict and a familiar machine conflict occur in "
+            "one small warehouse. Both earlier rules are needed."
         ),
         "expected_transition": (
-            "add target-square scope to the two previously useful conventions"
+            "retrieve the road and machine rules together"
         ),
-        "variants": scoped_context_variants,
+        "variants": road_machine_composition_variants,
         "optimality_reference": [
-            SCOPED_YIELD_EAST,
+            YIELD_EAST,
             MACHINE_NON_OPERATOR_PRIORITY,
         ],
         "shortcut_rulebooks": (
             [
-                SCOPED_YIELD_EAST_CARRIER,
-                SCOPED_YIELD_EAST_OPERATOR,
+                YIELD_EAST_CARRIER,
+                YIELD_EAST_OPERATOR,
                 MACHINE_CARRIER_PRIORITY,
                 MACHINE_CLEANER_PRIORITY,
             ],
         ),
         "contract": {
             "empty": (False, "resource-conflict"),
-            "scoped_road_and_machine": (True, "ok"),
-            "unscoped_road_and_machine": (False, "timeout"),
-            "road_only": (False, "resource-conflict"),
-            "non_operator_priority": (False, "collision"),
+            "road_and_machine": (True, "ok"),
+            "yield_east": (False, "resource-conflict"),
+            "machine_non_operator_priority": (False, "collision"),
         },
     },
     {
         "id": "trial_10",
         "participant_label": "T10",
         "participant_description": (
-            "Twelve robots must complete their targets in a warehouse containing "
-            "cold storage, ordinary crossings, and setup machines."
+            "Six robots must complete their targets in a warehouse containing "
+            "cold storage, a shared crossing, and a setup machine."
         ),
         "layer": 4,
         "prerequisites": ("trial_6", "trial_9"),
         "stage": "Integrated system",
         "evidence_function": (
-            "The precise safety rule and both context-scoped coordination rules "
-            "are needed in one scene with several different local events."
+            "One instance of each familiar problem type appears together. The "
+            "task tests selection of three cached rules, not a larger map."
         ),
         "expected_transition": (
-            "retrieve and jointly apply the three refined cached norms"
+            "retrieve and jointly apply the safety, road, and machine rules"
         ),
         "variants": integrated_variants,
         "optimality_reference": [
             NEGATED_EXCEPTION,
-            SCOPED_YIELD_EAST,
+            YIELD_EAST,
             MACHINE_NON_OPERATOR_PRIORITY,
         ],
         "shortcut_rulebooks": (
             [
                 NEGATED_EXCEPTION,
-                SCOPED_YIELD_EAST_CARRIER,
-                SCOPED_YIELD_EAST_OPERATOR,
+                YIELD_EAST_CARRIER,
+                YIELD_EAST_OPERATOR,
                 MACHINE_CARRIER_PRIORITY,
                 MACHINE_CLEANER_PRIORITY,
             ],
@@ -1055,7 +1054,7 @@ SHIFT_BLUEPRINTS = (
         "contract": {
             "empty": (False, None),
             "negated_exception": (False, None),
-            "protect_and_scoped_road": (False, "resource-conflict"),
+            "protect_and_road": (False, "resource-conflict"),
             "protect_and_machine": (False, "collision"),
             "complete_rulebook": (True, "ok"),
         },
@@ -1269,9 +1268,9 @@ def ground_truth_json():
         "curriculum_logic": (
             "A broad safety rule is refined by legitimate counterexamples. "
             "A road convention and a machine-priority norm are then learned. "
-            "A cross-context counterexample forces the road convention to be "
-            "scoped away from machines before T10 requires the three earlier "
-            "rules together. Earlier scenes do not need to share one rulebook."
+            "T7--T9 then require each pair of these three rules, before T10 "
+            "requires all three together. Earlier scenes do not need to share "
+            "one rulebook."
         ),
         "recommended_order": [
             blueprint["id"]
