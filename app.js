@@ -21,7 +21,6 @@ let lastRuleEventIndex = 0;
 let nextRuleId = 1;
 let rulebookRevision = 0;
 const sceneGuidesSeen = new Set();
-let initialSceneChosen = false;
 const shiftStates = Object.fromEntries(TASKS.map(task => [
   task.id,
   { visited:false, lastOk:null, testedRevision:null, attempts:0 },
@@ -1651,9 +1650,7 @@ function startTaskAfterTutorial(){
   lastAttemptAt = startTime;
   lastRuleEventIndex = ruleEvents.length;
   window.scrollTo(0, 0);
-  if(!initialSceneChosen && FREE_ORDER){
-    setTimeout(() => showScenePicker(), 0);
-  }else if(shouldAutoShowGuide(scn)){
+  if(shouldAutoShowGuide(scn)){
     setTimeout(() => showSceneGuide(), 0);
   }
 }
