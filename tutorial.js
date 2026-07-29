@@ -152,9 +152,9 @@ const PAGES = [
     points:[
       "A condition has three fields: object, IS / IS NOT, and fact.",
       "Select Practice object, IS, and marked; then select Add condition.",
-      "Press Run to test the rule. A correct rule makes the robot take another route.",
-      "Save the working rule to the library before continuing.",
-      "Additional conditions are joined by AND; all must be true for the rule to apply.",
+      "Press Run to test the rule. Save it to the library once it works.",
+      "Within one rule, conditions are joined by AND: all must be true.",
+      "Use Add Rule for a separate rule. A move is forbidden if any active rule matches it.",
       "Every active rule is shared: every robot in that scene follows it.",
     ],
     scene:RULE_PRACTICE_SCENE,
@@ -548,6 +548,12 @@ function ruleReferenceMarkup(){
 function libraryReferenceMarkup(){
   const text = state.practiceCondition?.text || "the robot is moving north";
   return `
+    <div class="tut-library-instruction ${state.practiceUsed ? "is-complete" : ""}">
+      <span>${state.practiceUsed ? "Added" : "Step 1"}</span>
+      <strong>${state.practiceUsed
+        ? "The saved rule is now in this scene's rulebook."
+        : "In Saved rule library, click Add to rulebook."}</strong>
+    </div>
     <div class="tut-library-demo">
       <section>
         <h3>Rules in this scene</h3>
@@ -562,7 +568,7 @@ function libraryReferenceMarkup(){
         <h3>Saved rule library</h3>
         <div class="tut-saved-row">
           <span>FORBID MOVE INTO A SQUARE WHEN ${text}</span>
-          <button id="tut-use-practice" type="button" ${state.practiceUsed ? "disabled" : ""}>
+          <button class="${state.practiceUsed ? "" : "tut-next-action"}" id="tut-use-practice" type="button" ${state.practiceUsed ? "disabled" : ""}>
             ${state.practiceUsed ? "Added" : "Add to rulebook"}
           </button>
         </div>
