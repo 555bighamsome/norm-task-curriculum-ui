@@ -24,6 +24,9 @@ const state = {
   pageStartedAt:0,
   pageVisits:[],
   runs:[],
+  practiceCondition:null,
+  practiceSaved:false,
+  practiceUsed:false,
 };
 
 function makeScene(id, walls, agents){
@@ -85,16 +88,17 @@ const COLLISION_SCENE = makeScene(
 const PAGES = [
   {
     id:"goal",
-    title:"What you need to do",
-    lead:"In each scene, build shared rules that let every active robot complete its target without causing a failure.",
+    title:"Read the map",
+    lead:"Your task is to write shared rules that let every active robot complete its target without causing a failure.",
     points:[
-      "Each robot has a number and a colour.",
-      "The dashed square with the same number and colour is that robot's target.",
-      "Available squares can be entered. Dark squares are walls.",
-      "You write rules for the robots; you do not move them directly.",
+      "A robot and its target have the same number and colour.",
+      "A target is shown as a dashed square.",
+      "Robots may enter available squares but cannot enter walls.",
+      "Numbers and colours only match robots to targets; they do not give priority.",
     ],
     scene:MOVEMENT_SCENE,
     controls:false,
+    reference:"map",
     initialNote:"Robot 0 and its dashed target use the same number and colour.",
   },
   {
@@ -127,15 +131,30 @@ const PAGES = [
   },
   {
     id:"rules",
-    title:"Build, test, and refine rules",
-    lead:"A shared rule removes a move from every robot whenever all of its conditions are true.",
+    title:"Write a rule",
+    lead:"A rule forbids a move only when all of its conditions are true. Complete one practice condition.",
     points:[
-      "Rules use the form FORBID MOVE INTO A SQUARE WHEN [conditions].",
-      "Use IS when a fact must hold and IS NOT when it must not hold.",
-      "Conditions joined by AND must all be true for the rule to apply.",
-      "Rules apply to every robot in the current scene.",
+      "A condition has three fields: object, IS / IS NOT, and fact.",
+      "In the task, an object can be the Target square, Robot, or Movement.",
+      "For practice, choose Practice object, a relation, and marked; then select Add condition.",
+      "Additional conditions are joined by AND; all must be true for the rule to apply.",
+      "Every active rule is shared: every robot in that scene follows it.",
     ],
-    ruleReference:true,
+    reference:"rule",
+    requires:"condition",
+  },
+  {
+    id:"library",
+    title:"Save and reuse a rule",
+    lead:"Use the practice rule to learn what the saved rule library does.",
+    points:[
+      "Save to library stores a rule for possible use in another scene.",
+      "Saving does not automatically activate the rule in other scenes.",
+      "Select Use to add a copy of the saved rule to the current scene.",
+      "A reused rule should still be tested and revised when necessary.",
+    ],
+    reference:"library",
+    requires:"library",
   },
 ];
 
@@ -300,20 +319,196 @@ function resetCurrentScene(){
   setFeedback(null, page.initialNote || "");
 }
 
-function ruleReferenceMarkup(){
+function mapReferenceMarkup(){
   return `
-    <div class="tut-rule-example" aria-label="Rule structure">
-      <div class="tut-rule-action"><span>FORBID</span><strong>MOVE INTO A SQUARE</strong></div>
-      <div class="tut-rule-cond"><span>WHEN</span><b>[condition]</b></div>
-      <div class="tut-rule-cond"><span>AND</span><b>[optional condition]</b></div>
-    </div>
-    <div class="tut-workflow">
-      <div><span>1</span><strong>Run</strong><small>Observe what happens.</small></div>
-      <div><span>2</span><strong>Add Rule</strong><small>Choose the conditions.</small></div>
-      <div><span>3</span><strong>Run again</strong><small>Inspect the result and revise.</small></div>
-      <div><span>4</span><strong>Save useful rules</strong><small>Reuse them in later scenes if helpful.</small></div>
+    <div class="tut-map-key" aria-label="Basic map elements">
+      <div>
+        <span class="tut-key-robot">${icon("carrier", "robot-role")}<small>0</small></span>
+        <span><strong>Robot 0</strong><small>An active robot.</small></span>
+      </div>
+      <div>
+        <span class="tut-key-target"><small>0</small></span>
+        <span><strong>Target 0</strong><small>Robot 0's destination.</small></span>
+      </div>
+      <div>
+        <span class="tut-key-floor">${icon("floor")}</span>
+        <span><strong>Available square</strong><small>A robot may enter it.</small></span>
+      </div>
+      <div>
+        <span class="tut-key-wall">${icon("wall")}</span>
+        <span><strong>Wall</strong><small>A robot cannot enter it.</small></span>
+      </div>
     </div>
   `;
+}
+
+const PRACTICE_TERMS = {
+  practice:[
+    {id:"marked", label:"marked", text:"the practice object is marked"},
+  ],
+};
+
+function practiceConditionText(operator, term){
+  if(!term) return "";
+  if(operator === "IS") return term.text;
+  return term.text.replace(/\bis\b/, "is not");
+}
+
+function updateContinueState(){
+  const requirement = PAGES[state.page].requires;
+  el("tut-continue").disabled =
+    (requirement === "condition" && !state.practiceCondition) ||
+    (requirement === "library" && !state.practiceUsed);
+}
+
+function bindRulePractice(){
+  const object = el("tut-practice-object");
+  const operator = el("tut-practice-operator");
+  const fact = el("tut-practice-fact");
+  const add = el("tut-practice-add");
+  if(!object || !operator || !fact || !add) return;
+
+  function updateFacts(){
+    const terms = PRACTICE_TERMS[object.value] || [];
+    fact.innerHTML = '<option value="">Select fact</option>' +
+      terms.map(term => `<option value="${term.id}">${term.label}</option>`).join("");
+    fact.disabled = !terms.length;
+    add.disabled = true;
+  }
+
+  function updateAdd(){
+    add.disabled = !(object.value && operator.value && fact.value);
+  }
+
+  object.onchange = updateFacts;
+  operator.onchange = updateAdd;
+  fact.onchange = updateAdd;
+  add.onclick = () => {
+    const term = (PRACTICE_TERMS[object.value] || []).find(row => row.id === fact.value);
+    state.practiceCondition = {
+      object:object.value,
+      operator:operator.value,
+      fact:fact.value,
+      text:practiceConditionText(operator.value, term),
+    };
+    emit("tutorial_condition_created", {...state.practiceCondition});
+    renderReference("rule");
+    updateContinueState();
+  };
+}
+
+function ruleReferenceMarkup(){
+  const condition = state.practiceCondition;
+  return `
+    <div class="tut-practice-label">Practice only — this rule will not enter the task.</div>
+    <div class="tut-rule-example tut-rule-builder" aria-label="Practice rule builder">
+      <div class="tut-rule-action"><span>FORBID</span><strong>MOVE INTO A SQUARE</strong></div>
+      ${condition ? `
+        <div class="tut-rule-cond completed"><span>WHEN</span><b>${condition.text}</b></div>
+        <button class="tut-change-condition" id="tut-change-condition" type="button">Change condition</button>
+      ` : `
+        <div class="tut-practice-editor">
+          <span>WHEN</span>
+          <select id="tut-practice-object" aria-label="Condition object">
+            <option value="">Select object</option>
+            <option value="practice">Practice object</option>
+          </select>
+          <select id="tut-practice-operator" aria-label="Condition relation">
+            <option value="">IS or IS NOT</option>
+            <option value="IS">IS</option>
+            <option value="IS_NOT">IS NOT</option>
+          </select>
+          <select id="tut-practice-fact" aria-label="Condition fact" disabled>
+            <option value="">Select fact</option>
+          </select>
+          <button id="tut-practice-add" type="button" disabled>Add condition</button>
+        </div>
+      `}
+    </div>
+    <p class="tut-practice-help">${condition
+      ? "Condition added. In the task, select + Add condition to add another AND condition."
+      : "Choose any complete condition. There is no correct answer in this practice step."}</p>
+  `;
+}
+
+function libraryReferenceMarkup(){
+  const text = state.practiceCondition?.text || "the robot is moving north";
+  return `
+    <div class="tut-library-demo">
+      <section>
+        <h3>Rule in the scene</h3>
+        <div class="tut-library-rule">
+          <div><span>FORBID</span> MOVE INTO A SQUARE</div>
+          <div><span>WHEN</span> ${text}</div>
+        </div>
+        <button id="tut-save-practice" type="button" ${state.practiceSaved ? "disabled" : ""}>
+          ${state.practiceSaved ? "Saved" : "Save to library"}
+        </button>
+      </section>
+      <section>
+        <h3>Saved rule library</h3>
+        ${state.practiceSaved ? `
+          <div class="tut-saved-row">
+            <span>FORBID MOVE INTO A SQUARE WHEN ${text}</span>
+            <button id="tut-use-practice" type="button" ${state.practiceUsed ? "disabled" : ""}>
+              ${state.practiceUsed ? "In scene" : "Use"}
+            </button>
+          </div>
+        ` : '<p class="tut-library-empty">No saved rules yet.</p>'}
+      </section>
+    </div>
+    <p class="tut-practice-help">${state.practiceUsed
+      ? "The saved rule remains in the library, and a copy is now active in the scene."
+      : state.practiceSaved
+        ? "Now select Use to add a copy of the saved rule to the scene."
+        : "First save the practice rule."}</p>
+  `;
+}
+
+function bindLibraryPractice(){
+  const save = el("tut-save-practice");
+  const use = el("tut-use-practice");
+  if(save){
+    save.onclick = () => {
+      state.practiceSaved = true;
+      emit("tutorial_library_saved", {condition:state.practiceCondition?.text || null});
+      renderReference("library");
+      updateContinueState();
+    };
+  }
+  if(use){
+    use.onclick = () => {
+      state.practiceUsed = true;
+      emit("tutorial_library_used", {condition:state.practiceCondition?.text || null});
+      renderReference("library");
+      updateContinueState();
+    };
+  }
+}
+
+function renderReference(kind){
+  const host = el("tut-rule-reference");
+  host.hidden = !kind;
+  if(!kind) return;
+  if(kind === "map") host.innerHTML = mapReferenceMarkup();
+  if(kind === "rule"){
+    host.innerHTML = ruleReferenceMarkup();
+    bindRulePractice();
+    const change = el("tut-change-condition");
+    if(change){
+      change.onclick = () => {
+        state.practiceCondition = null;
+        state.practiceSaved = false;
+        state.practiceUsed = false;
+        renderReference("rule");
+        updateContinueState();
+      };
+    }
+  }
+  if(kind === "library"){
+    host.innerHTML = libraryReferenceMarkup();
+    bindLibraryPractice();
+  }
 }
 
 function recordPageVisit(){
@@ -338,19 +533,19 @@ function renderPage(index){
   const visual = el("tut-visual");
   const ruleReference = el("tut-rule-reference");
   visual.hidden = !page.scene;
-  ruleReference.hidden = !page.ruleReference;
+  ruleReference.hidden = !page.reference;
 
   if(page.scene){
     el("tut-controls").hidden = !page.controls;
     resetCurrentScene();
   }
-  if(page.ruleReference) ruleReference.innerHTML = ruleReferenceMarkup();
+  renderReference(page.reference);
 
   el("tut-progress-label").textContent = `${state.page + 1} of ${PAGES.length}`;
   el("tut-progress-bar").style.width = `${((state.page + 1) / PAGES.length) * 100}%`;
   el("tut-back").disabled = state.page === 0;
   el("tut-continue").textContent = state.page === PAGES.length - 1 ? "Start task" : "Next";
-  el("tut-continue").disabled = false;
+  updateContinueState();
   el("tut-dots").innerHTML = PAGES.map((row, pageIndex) => {
     const className = pageIndex === state.page ? "is-active" : pageIndex < state.page ? "is-complete" : "";
     return `<span class="${className}"></span>`;
@@ -369,6 +564,11 @@ function completeTutorial(){
     duration_ms:Date.now() - state.startedAt,
     page_visits:state.pageVisits,
     runs:state.runs,
+    practice:{
+      condition_created:!!state.practiceCondition,
+      library_saved:state.practiceSaved,
+      library_used:state.practiceUsed,
+    },
   };
   emit("tutorial_completed", {
     duration_ms:window.tutorialReport.duration_ms,
@@ -409,6 +609,9 @@ window.ResearchTutorial = {
     }
     state.startedAt = Date.now();
     state.pageStartedAt = 0;
+    state.practiceCondition = null;
+    state.practiceSaved = false;
+    state.practiceUsed = false;
     document.body.classList.add("tutorial-active");
     document.querySelector(".wrap")?.setAttribute("aria-hidden", "true");
     screen.hidden = false;
