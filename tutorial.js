@@ -152,7 +152,6 @@ const PAGES = [
     points:[
       "Choose an object, IS / IS NOT, and a fact; then select Add condition.",
       "Conditions within one rule are joined by AND, so all of them must be true.",
-      "Add Rule creates a separate rule. A move is forbidden when any active rule matches it.",
       "Every active rule applies to every robot in the scene.",
     ],
     scene:RULE_PRACTICE_SCENE,
