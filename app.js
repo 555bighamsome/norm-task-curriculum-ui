@@ -33,6 +33,7 @@ const DEBUG_UI = URL_PARAMS.get("debug") === "1" ||
   window.location.hash.includes("debug");
 const ORDER_MODE = DEBUG_UI ? "free" : (URL_PARAMS.get("order") || "curriculum");
 const FREE_ORDER = ORDER_MODE === "free";
+const SKIP_TUTORIAL = URL_PARAMS.get("skipTutorial") === "1";
 
 function taskUnlocked(task){
   // Keep every scene available during pilot testing. Participants can choose
@@ -1682,7 +1683,13 @@ function download(name, mime, content){
 }
 
 function exportJson(){
-  download("norm-task-log.json", "application/json", JSON.stringify(runs, null, 2));
+  const payload = {
+    experiment_version:RAW_LIBRARY.experiment_version || null,
+    tutorial:window.tutorialReport || null,
+    rule_events:ruleEvents,
+    runs,
+  };
+  download("norm-task-log.json", "application/json", JSON.stringify(payload, null, 2));
 }
 
 function exportCsv(){
@@ -1690,6 +1697,36 @@ function exportCsv(){
   const esc = v => '"' + String(v ?? "").replaceAll('"', '""') + '"';
   const rows = [cols.join(",")].concat(runs.map(r => cols.map(c => esc(r[c])).join(",")));
   download("norm-task-log.csv", "text/csv", rows.join("\n") + "\n");
+}
+
+function startTaskAfterTutorial(){
+  const screen = $("tutorial-screen");
+  if(screen) screen.hidden = true;
+  document.body.classList.remove("tutorial-active");
+  document.querySelector(".wrap")?.removeAttribute("aria-hidden");
+  const startTime = Date.now();
+  experimentStartedAt = startTime;
+  trialStartedAt = startTime;
+  lastAttemptAt = startTime;
+  lastRuleEventIndex = ruleEvents.length;
+  window.scrollTo(0, 0);
+  if(!initialSceneChosen && FREE_ORDER){
+    setTimeout(() => showScenePicker(), 0);
+  }else if(shouldAutoShowGuide(scn)){
+    setTimeout(() => showSceneGuide(), 0);
+  }
+}
+
+function initializeTutorial(){
+  const screen = $("tutorial-screen");
+  if(!screen || !window.ResearchTutorial){
+    startTaskAfterTutorial();
+    return;
+  }
+  window.ResearchTutorial.start({
+    log:recordRuleEvent,
+    onComplete:startTaskAfterTutorial,
+  });
 }
 
 function renderAll(){
@@ -1734,9 +1771,6 @@ if(!TASKS.length){
   $("export-csv").onclick = exportCsv;
   rules = sceneRuleDrafts.get(scn.id) || [];
   renderAll();
-  if(!initialSceneChosen && FREE_ORDER){
-    setTimeout(() => showScenePicker(), 0);
-  }else if(shouldAutoShowGuide(scn)){
-    setTimeout(() => showSceneGuide(), 0);
-  }
+  if(SKIP_TUTORIAL) startTaskAfterTutorial();
+  else initializeTutorial();
 }

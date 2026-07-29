@@ -4,9 +4,59 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Shared Rulebook</title>
-<link rel="stylesheet" href="styles.css?v=ui-v33-new-element-title">
+<link rel="stylesheet" href="styles.css?v=ui-v36-tutorial-rewrite">
 </head>
 <body>
+<div class="onboarding-screen" id="tutorial-screen" hidden>
+  <main class="onboarding-shell" aria-labelledby="tutorial-title">
+    <header class="onboarding-header">
+      <div>
+        <div class="onboarding-kicker">Tutorial</div>
+        <h1 id="tutorial-title">Shared Rulebook</h1>
+      </div>
+      <div class="onboarding-progress" aria-live="polite">
+        <span id="tut-progress-label">1 of 4</span>
+        <div class="onboarding-progress-track" aria-hidden="true">
+          <span id="tut-progress-bar"></span>
+        </div>
+      </div>
+    </header>
+
+    <div class="tut-body">
+      <div class="tut-copy">
+        <h2 id="tut-title"></h2>
+        <p class="tut-lead" id="tut-lead"></p>
+        <ul class="tut-points" id="tut-points"></ul>
+      </div>
+
+      <div class="tut-panel">
+        <div class="tut-visual" id="tut-visual">
+          <div class="tut-board-frame" id="tut-board-frame">
+            <div class="board tut-board" id="tut-board"></div>
+          </div>
+          <div class="tut-feedback" id="tut-feedback"></div>
+          <div class="tut-controls" id="tut-controls">
+            <button class="btn primary" id="tut-run" type="button">Run</button>
+            <div class="step-nav">
+              <button class="btn step-button" id="tut-prev" type="button" aria-label="Previous step">←</button>
+              <span class="step-label" id="tut-step-label">Step 0 / 0</span>
+              <button class="btn step-button" id="tut-next-step" type="button" aria-label="Next step">→</button>
+            </div>
+            <button class="btn text-button" id="tut-reset" type="button">Reset</button>
+          </div>
+        </div>
+        <div class="tut-rule-reference" id="tut-rule-reference" hidden></div>
+      </div>
+    </div>
+
+    <footer class="onboarding-footer">
+      <button class="tutorial-nav-button secondary" id="tut-back" type="button" disabled>Back</button>
+      <div class="onboarding-step-dots" id="tut-dots" aria-hidden="true"></div>
+      <button class="tutorial-nav-button primary" id="tut-continue" type="button">Continue</button>
+    </footer>
+  </main>
+</div>
+
 <div class="wrap">
   <div class="taskbar">
     <div class="taskbar-head">
@@ -111,8 +161,9 @@
   </section>
 </div>
 
-<script src="data/tasks.generated.js?v=ui-v33-new-element-title"></script>
-<script src="engine.js?v=ui-v33-new-element-title"></script>
-<script src="app.js?v=ui-v33-new-element-title"></script>
+<script src="data/tasks.generated.js?v=ui-v36-tutorial-rewrite"></script>
+<script src="engine.js?v=ui-v36-tutorial-rewrite"></script>
+<script src="tutorial.js?v=ui-v36-tutorial-rewrite"></script>
+<script src="app.js?v=ui-v36-tutorial-rewrite"></script>
 </body>
 </html>
