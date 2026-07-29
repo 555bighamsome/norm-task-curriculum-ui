@@ -64,7 +64,15 @@ class World:
     scanners: set = field(default_factory=set)
     protected: list = field(default_factory=lambda: [("cold", "tainted")])
     T: int = 60
-    def passable(self, p): return p not in self.walls
+    rows: int = 10
+    cols: int = 10
+
+    def passable(self, p):
+        return (
+            0 <= p[0] < self.rows
+            and 0 <= p[1] < self.cols
+            and p not in self.walls
+        )
 
 def zone_of(w, c): return w.zone.get(c, "normal")
 
@@ -211,6 +219,8 @@ def simulate(world, law, trace=False):
         scanners=world.scanners,
         protected=world.protected,
         T=world.T,
+        rows=world.rows,
+        cols=world.cols,
     )
     for a in w.agents:
         p = plan(w, a, static_norms)

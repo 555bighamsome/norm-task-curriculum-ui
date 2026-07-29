@@ -9,7 +9,7 @@ wh_engine.py
   shortest legal planning and synchronous multi-robot transitions
 
 norm_solver.py
-  exact flat enumeration ordered by rule count and MDL, plus a shortcut audit
+  per-trial exact enumeration and final-trial reuse audit
 
 task_generator.py
   contract selection and browser-data export
@@ -22,7 +22,6 @@ Run:
 
 ```bash
 python3 solver/task_generator.py
-python3 solver/task_generator.py --include-prefixes
 python3 solver/validate_tasks.py
 ```
 
@@ -32,27 +31,29 @@ Active calibration:
 scenes                       10
 map size                     controlled 10 x 10
 canonical single rules       5,669
-minimum global rules         3
-minimum global MDL           9
-minimum-MDL rulebooks        2
-compositional search cost    6,397
-late-trial single-rule       T6 has 240 canonical single-rule solutions; T7--T10 have 0
+T6 reusable optimum          1 rule, MDL 3
+T7 reusable optimum          1 rule, MDL 2
+T8 reusable optimum          1 rule, MDL 2
+T9 reusable optimum          2 rules, MDL 6
+T10 reusable optimum         3 rules, MDL 9
+T10 canonical singles        5,669 tested; 0 solutions
+T10 reusable pairs           72,771 tested; 0 solutions
+T10 lower-MDL triples        82,948 tested; 0 solutions
+T10 explicit shortcut        5 rules, MDL 17
 ```
 
-The first five scenes establish precise cold-storage protection, a road
-convention, and machine-scoped carrier priority. In T6, the standard warehouse
-layout creates two successive pairwise conflicts: carrier/operator at the
-first junction, then operator/cleaner at the second. Its local reference solution is
-the compact role rule `contested AND robot IS NOT operator`; the exact solver
-also reports all other successful single-rule alternatives. T7--T9 are the
-original interaction and integrated scenes, and T10 remains the full
-integrated scene.
+T1--T5 introduce and refine safety, road, and machine rules. T6--T8 make
+those rules useful again in new layouts. T9 requires the road and machine
+rules to be scoped to their proper contexts. T10 contains safety events, two
+ordinary conflicts, and two machine conflicts. Its minimum reusable solution
+retrieves the three MDL-3 rules learned earlier.
 
-The solver's global optimum is a calibration target, not the participant's
-answer key. Participants may submit any rulebook that the engine accepts. The
-important distinction is between solving the current scene with active rules
-and checking the saved library across all scenes.
+Scenes are solved independently. The saved library is optional external memory,
+not a global rulebook that must solve the whole curriculum. Participants may
+submit any rulebook that the engine accepts for the current scene.
 
-`analyze_submitted_rulebook(...)` scores arbitrary participant rulebooks,
-including systems outside the compositional baseline. The older solvers remain
-historical prototypes and do not generate the active experiment.
+For T10, the single-rule audit is exact over the complete canonical grammar.
+The pair and lower-MDL triple audits are exact over the 382 rules with positive
+single-rule evidence in T1--T9; this is the operational hypothesis space for
+library reuse. The explicit five-rule shortcut confirms that enumeration can
+still solve the scene, but at a higher construction cost.

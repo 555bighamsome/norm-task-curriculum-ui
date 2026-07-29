@@ -22,9 +22,8 @@ from experiment_v2 import (
     rule_schema_json,
 )
 from norm_solver import (
-    analyze_curriculum_prefixes,
+    analyze_reuse_optimality,
     analyze_trial_optimality,
-    solve_shift_suite,
 )
 from wh_engine import simulate
 
@@ -129,26 +128,45 @@ def _contract_json(report):
 def make_library(*, include_solver=True, include_prefixes=False):
     shifts = build_shift_library()
     schema = rule_schema_json()
-    if include_solver:
-        solver = solve_shift_suite(shifts)
-    else:
-        solver = {
-            "solver": "not_run",
-            "candidate_rule_count": schema["canonical_rule_count"],
-        }
-    shortcut_audit = {
-        row["shift_id"]: row
-        for row in solver.get("task_shortcut_audit", [])
-    }
 
     shift_rows = []
-    for shift, blueprint in zip(shifts, SHIFT_BLUEPRINTS):
+    optimality_rows = []
+    for shift_index, (shift, blueprint) in enumerate(
+        zip(shifts, SHIFT_BLUEPRINTS)
+    ):
         baseline = simulate(shift.world, [], trace=True)
         contract_ok, report = contract_report(shift.world, blueprint["contract"])
         active_agent_count = sum(
             agent_is_active(shift.world, agent)
             for agent in shift.world.agents
         )
+        optimality = None
+        if include_solver and blueprint.get("optimality_reference"):
+            if shift.id == "trial_10":
+                optimality = analyze_reuse_optimality(
+                    shift.world,
+                    blueprint["optimality_reference"],
+                    shifts[:shift_index],
+                    shortcut_rulebooks=blueprint.get(
+                        "shortcut_rulebooks",
+                        (),
+                    ),
+                )
+            else:
+                optimality = analyze_trial_optimality(
+                    shift.world,
+                    blueprint["optimality_reference"],
+                    shortcut_rulebooks=blueprint.get(
+                        "shortcut_rulebooks",
+                        (),
+                    ),
+                )
+            optimality_rows.append({
+                "trial_id": shift.id,
+                "minimum_rule_count": optimality["minimum_rule_count"],
+                "minimum_mdl": optimality["minimum_mdl"],
+                "is_reference_optimal": optimality["is_reference_optimal"],
+            })
         shift_rows.append(
             {
                 "id": shift.id,
@@ -174,15 +192,7 @@ def make_library(*, include_solver=True, include_prefixes=False):
                     "active_agent_count": active_agent_count,
                     "contract_satisfied": contract_ok,
                     "contract": _contract_json(report),
-                    "shortcut_audit": shortcut_audit.get(shift.id),
-                    "optimality": (
-                        analyze_trial_optimality(
-                            shift.world,
-                            blueprint["optimality_reference"],
-                        )
-                        if blueprint.get("optimality_reference")
-                        else None
-                    ),
+                    "optimality": optimality,
                 },
                 "world": world_json(shift.world),
                 "baseline": {
@@ -193,12 +203,37 @@ def make_library(*, include_solver=True, include_prefixes=False):
             }
         )
 
+    solver = {
+        "solver": (
+            "per_trial_exact_calibration"
+            if include_solver
+            else "not_run"
+        ),
+        "global_rulebook_required": False,
+        "candidate_rule_count": schema["canonical_rule_count"],
+        "calibrated_trial_ids": [
+            row["trial_id"]
+            for row in optimality_rows
+        ],
+        "trial_optima": optimality_rows,
+        "final_trial_requirement": {
+            "trial_id": "trial_10",
+            "minimum_rule_count": 3,
+            "minimum_mdl": 9,
+            "components_must_have_prior_evidence": True,
+        },
+        "scope_note": (
+            "Scenes are solved independently. The library is an optional "
+            "external memory for carrying successful rules into later scenes."
+        ),
+    }
+
     library = {
         "experiment_version": 7,
         "title": "Shared Rulebook",
         "objective": (
-            "Build one compact set of shared rules that lets every scene "
-            "finish without contamination, collision, or incorrect machine access."
+            "Solve each scene with shared rules. Save useful rules and reuse "
+            "them in later scenes when helpful."
         ),
         "world_rules": [
             (
@@ -233,7 +268,7 @@ def make_library(*, include_solver=True, include_prefixes=False):
                 "At setup machines, an operator must enter first to prepare "
                 "the station; a carrier can enter after the operator releases it."
             ),
-            "The same shared rulebook applies to every scene.",
+            "Within a scene, every active rule applies to every robot.",
         ],
         "rule_schema": schema,
         "global_actions": [
@@ -245,11 +280,7 @@ def make_library(*, include_solver=True, include_prefixes=False):
         },
         "ground_truth_design": ground_truth_json(),
         "global_solver": solver,
-        "curriculum_prefixes": (
-            analyze_curriculum_prefixes(shifts)
-            if include_solver and include_prefixes
-            else []
-        ),
+        "curriculum_prefixes": [],
         "tasks": shift_rows,
     }
     return library

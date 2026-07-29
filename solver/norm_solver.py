@@ -14,6 +14,7 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from itertools import combinations
+import multiprocessing as mp
 
 from experiment_v2 import (
     GROUND_TRUTH_RULEBOOK,
@@ -56,7 +57,14 @@ def rulebook_mdl(rulebook):
     return sum(rule_mdl(rule) for rule in rulebook)
 
 
-def analyze_trial_optimality(world, reference_rulebook, *, max_conditions=MAX_RULE_CONDITIONS):
+def analyze_trial_optimality(
+    world,
+    reference_rulebook,
+    *,
+    shortcut_rulebooks=(),
+    enumerate_equal_cost=False,
+    max_conditions=MAX_RULE_CONDITIONS,
+):
     """Exhaustively certify a reference rulebook for one scene.
 
     We first test every canonical single rule.  For a one-rule reference, we
@@ -82,20 +90,42 @@ def analyze_trial_optimality(world, reference_rulebook, *, max_conditions=MAX_RU
     by_mdl = defaultdict(list)
     for candidate in candidates:
         by_mdl[rule_mdl(candidate)].append(candidate)
-    lower_mdl_pair_winners = []
-    pair_systems_tested = 0
+    lower_mdl_pair_winner_count = 0
+    lower_mdl_pair_examples = []
+    equal_cost_pair_winner_count = 0
+    equal_cost_pair_examples = []
+    lower_mdl_pair_systems_tested = 0
+    equal_mdl_pair_systems_tested = 0
     if len(reference) >= 2:
         for first_mdl in sorted(by_mdl):
             for second_mdl in sorted(by_mdl):
-                if first_mdl > second_mdl or first_mdl + second_mdl >= reference_mdl:
+                pair_mdl = first_mdl + second_mdl
+                if (
+                    first_mdl > second_mdl
+                    or pair_mdl > reference_mdl
+                    or (
+                        pair_mdl == reference_mdl
+                        and not enumerate_equal_cost
+                    )
+                ):
                     continue
                 for first in by_mdl[first_mdl]:
                     for second in by_mdl[second_mdl]:
                         if first_mdl == second_mdl and rule_key(first) >= rule_key(second):
                             continue
-                        pair_systems_tested += 1
+                        if pair_mdl < reference_mdl:
+                            lower_mdl_pair_systems_tested += 1
+                        else:
+                            equal_mdl_pair_systems_tested += 1
                         if simulate(world, [first, second])[0]:
-                            lower_mdl_pair_winners.append((first, second))
+                            if pair_mdl < reference_mdl:
+                                lower_mdl_pair_winner_count += 1
+                                if len(lower_mdl_pair_examples) < 5:
+                                    lower_mdl_pair_examples.append((first, second))
+                            else:
+                                equal_cost_pair_winner_count += 1
+                                if len(equal_cost_pair_examples) < 5:
+                                    equal_cost_pair_examples.append((first, second))
 
     reference_solves = simulate(world, reference)[0]
     optimal = reference_solves and (
@@ -106,7 +136,7 @@ def analyze_trial_optimality(world, reference_rulebook, *, max_conditions=MAX_RU
         or (
             len(reference) >= 2
             and not single_winners
-            and not lower_mdl_pair_winners
+            and lower_mdl_pair_winner_count == 0
         )
     )
     minimum_rule_count = 0 if simulate(world, [])[0] else (
@@ -119,14 +149,232 @@ def analyze_trial_optimality(world, reference_rulebook, *, max_conditions=MAX_RU
         "single_rule_systems_tested": len(candidates),
         "single_rule_solution_count": len(single_winners),
         "lower_mdl_single_solution_count": len(lower_mdl_single_winners),
-        "two_rule_systems_tested_below_reference_mdl": pair_systems_tested,
-        "two_rule_solution_count_below_reference_mdl": len(lower_mdl_pair_winners),
+        "two_rule_systems_tested_below_reference_mdl": (
+            lower_mdl_pair_systems_tested
+        ),
+        "two_rule_systems_tested_at_reference_mdl": (
+            equal_mdl_pair_systems_tested
+        ),
+        "two_rule_solution_count_below_reference_mdl": lower_mdl_pair_winner_count,
+        "two_rule_solution_count_at_reference_mdl": equal_cost_pair_winner_count,
+        "lower_mdl_two_rule_examples": [
+            [_serialize_rule(rule) for rule in pair]
+            for pair in lower_mdl_pair_examples
+        ],
+        "equal_mdl_two_rule_examples": [
+            [_serialize_rule(rule) for rule in pair]
+            for pair in equal_cost_pair_examples
+        ],
         "minimum_rule_count": minimum_rule_count,
         "minimum_mdl": reference_mdl if optimal else None,
         "reference_rulebook": [_serialize_rule(rule) for rule in reference],
         "reference_rulebook_mdl": reference_mdl,
         "reference_solves": reference_solves,
         "is_reference_optimal": optimal,
+        "shortcut_checks": [
+            {
+                "rule_count": len(shortcut),
+                "mdl": rulebook_mdl(shortcut),
+                "solves": simulate(world, shortcut)[0],
+                "rules": [_serialize_rule(rule) for rule in shortcut],
+                "strictly_more_expensive": (
+                    len(shortcut) > len(reference)
+                    or (
+                        len(shortcut) == len(reference)
+                        and rulebook_mdl(shortcut) > reference_mdl
+                    )
+                ),
+            }
+            for shortcut in shortcut_rulebooks
+        ],
+    }
+
+
+_AUDIT_WORLD = None
+_AUDIT_CANDIDATES = None
+
+
+def _audit_index_system(indices):
+    rulebook = [_AUDIT_CANDIDATES[index] for index in indices]
+    return indices if simulate(_AUDIT_WORLD, rulebook)[0] else None
+
+
+def _audit_systems(world, candidates, systems, *, max_examples=5):
+    """Evaluate an explicit system list, using forked workers when available."""
+    global _AUDIT_WORLD, _AUDIT_CANDIDATES
+    systems = list(systems)
+    _AUDIT_WORLD = world
+    _AUDIT_CANDIDATES = candidates
+    winners = 0
+    examples = []
+
+    try:
+        context = mp.get_context("fork")
+    except ValueError:
+        context = None
+
+    if context is None or len(systems) < 2_000:
+        results = map(_audit_index_system, systems)
+        pool = None
+    else:
+        pool = context.Pool(min(10, mp.cpu_count()))
+        results = pool.imap_unordered(
+            _audit_index_system,
+            systems,
+            chunksize=100,
+        )
+
+    try:
+        for result in results:
+            if result is None:
+                continue
+            winners += 1
+            if len(examples) < max_examples:
+                examples.append(result)
+    finally:
+        if pool is not None:
+            pool.close()
+            pool.join()
+        _AUDIT_WORLD = None
+        _AUDIT_CANDIDATES = None
+
+    return {
+        "systems_tested": len(systems),
+        "solution_count": winners,
+        "examples": [
+            [_serialize_rule(candidates[index]) for index in indices]
+            for indices in examples
+        ],
+    }
+
+
+def analyze_reuse_optimality(
+    world,
+    reference_rulebook,
+    prior_shifts,
+    *,
+    shortcut_rulebooks=(),
+    max_conditions=MAX_RULE_CONDITIONS,
+):
+    """Certify the final trial in the hypothesis space learned earlier.
+
+    A reusable candidate is any canonical rule that solves at least one
+    preceding scene on its own. The audit tests all canonical single rules,
+    every pair of reusable rules, every lower-MDL reusable triple, and every
+    reusable triple at the reference MDL.
+    """
+    candidates = candidate_rules(max_conditions)
+    reference = [clone_rule(rule) for rule in reference_rulebook]
+    reference_mdl = rulebook_mdl(reference)
+    prior_shifts = list(prior_shifts)
+
+    single_audit = _audit_systems(
+        world,
+        candidates,
+        ((index,) for index in range(len(candidates))),
+    )
+
+    reusable = []
+    evidence_by_key = {}
+    for candidate in candidates:
+        evidence = [
+            shift.id
+            for shift in prior_shifts
+            if simulate(shift.world, [candidate])[0]
+        ]
+        if evidence:
+            evidence_by_key[rule_key(candidate)] = evidence
+            reusable.append(candidate)
+
+    reusable_pairs = list(combinations(range(len(reusable)), 2))
+    pair_audit = _audit_systems(world, reusable, reusable_pairs)
+
+    lower_mdl_triples = [
+        indices
+        for indices in combinations(range(len(reusable)), 3)
+        if sum(rule_mdl(reusable[index]) for index in indices) < reference_mdl
+    ]
+    lower_triple_audit = _audit_systems(
+        world,
+        reusable,
+        lower_mdl_triples,
+    )
+
+    reference_solves = simulate(world, reference)[0]
+    reference_evidence = [
+        {
+            "rule": _serialize_rule(rule),
+            "prior_trial_ids": evidence_by_key.get(rule_key(rule), []),
+        }
+        for rule in reference
+    ]
+    reference_is_reusable = all(
+        row["prior_trial_ids"]
+        for row in reference_evidence
+    )
+    optimal = (
+        reference_solves
+        and reference_is_reusable
+        and single_audit["solution_count"] == 0
+        and pair_audit["solution_count"] == 0
+        and lower_triple_audit["solution_count"] == 0
+    )
+
+    return {
+        "solver": "final_trial_reuse_exact_enumeration",
+        "hypothesis_space": (
+            "all canonical single rules; multi-rule systems use canonical rules "
+            "that solve at least one preceding trial on their own"
+        ),
+        "candidate_rule_count": len(candidates),
+        "reusable_rule_count": len(reusable),
+        "prior_trial_ids": [shift.id for shift in prior_shifts],
+        "single_rule_systems_tested": single_audit["systems_tested"],
+        "single_rule_solution_count": single_audit["solution_count"],
+        "single_rule_examples": single_audit["examples"],
+        "two_rule_systems_tested": pair_audit["systems_tested"],
+        "two_rule_solution_count": pair_audit["solution_count"],
+        "two_rule_examples": pair_audit["examples"],
+        "three_rule_systems_tested_below_reference_mdl": (
+            lower_triple_audit["systems_tested"]
+        ),
+        "three_rule_solution_count_below_reference_mdl": (
+            lower_triple_audit["solution_count"]
+        ),
+        "lower_mdl_three_rule_examples": lower_triple_audit["examples"],
+        "reference_cost_systems_tested": 1,
+        "reference_cost_solution_count": int(reference_solves),
+        "minimum_rule_count": 3 if optimal else None,
+        "minimum_mdl": reference_mdl if optimal else None,
+        "reference_rulebook": [_serialize_rule(rule) for rule in reference],
+        "reference_rulebook_mdl": reference_mdl,
+        "reference_solves": reference_solves,
+        "reference_rules_reused_from_prior_trials": reference_is_reusable,
+        "reference_rule_prior_evidence": reference_evidence,
+        "is_reference_optimal": optimal,
+        "shortcut_checks": [
+            {
+                "rule_count": len(shortcut),
+                "mdl": rulebook_mdl(shortcut),
+                "solves": simulate(world, shortcut)[0],
+                "rules": [_serialize_rule(rule) for rule in shortcut],
+                "strictly_more_expensive": (
+                    len(shortcut) > len(reference)
+                    or (
+                        len(shortcut) == len(reference)
+                        and rulebook_mdl(shortcut) > reference_mdl
+                    )
+                ),
+            }
+            for shortcut in shortcut_rulebooks
+        ],
+        "scope_note": (
+            "The one-rule layer is exact over the full canonical rule space. "
+            "The two-rule and lower-MDL three-rule layers are exact over rules "
+            "with positive single-rule evidence in T1-T9, which operationalizes "
+            "library reuse. The supplied MDL-9 reference establishes existence "
+            "at the first uneliminated cost."
+        ),
     }
 
 

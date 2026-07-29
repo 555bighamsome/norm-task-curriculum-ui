@@ -1097,39 +1097,6 @@ body{min-height:0;}
   min-width:0;
   margin-top:0;
 }
-.course-results{
-  margin-top:14px;
-  padding-top:12px;
-  border-top:1px solid var(--line2);
-}
-.course-results[hidden]{display:none;}
-.course-results-heading{
-  color:var(--text);
-  font-size:12px;
-  font-weight:700;
-}
-.course-results-summary{
-  margin-top:2px;
-  color:var(--muted);
-  font-size:11px;
-}
-.course-result-list{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  column-gap:12px;
-  margin-top:7px;
-}
-.course-result{
-  display:flex;
-  justify-content:space-between;
-  gap:8px;
-  padding:3px 0;
-  color:var(--muted);
-  font-size:11px;
-}
-.course-result.ok span:last-child{color:var(--ok);}
-.course-result.bad span:last-child{color:var(--danger);}
-
 .scene-picker-backdrop{
   position:fixed;
   inset:0;

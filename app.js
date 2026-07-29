@@ -36,9 +36,10 @@ const FREE_ORDER = ORDER_MODE === "free";
 const SKIP_TUTORIAL = URL_PARAMS.get("skipTutorial") === "1";
 
 function taskUnlocked(task){
-  // Keep every scene available during pilot testing. Participants can choose
-  // any map, while each scene still records its own result independently.
-  return true;
+  if(FREE_ORDER) return true;
+  const index = TASKS.indexOf(task);
+  if(index <= 0) return true;
+  return shiftStates[TASKS[index - 1].id].lastOk === true;
 }
 
 function unlockedTasks(){
@@ -1608,68 +1609,6 @@ function resetBoard(){
   buildBoard();
   setStatus("The board has been reset.", "");
   updateFrameButtons();
-}
-
-function renderCourseResults(results){
-  const box = $("course-results");
-  if(!box) return;
-  box.hidden = false;
-  box.innerHTML = "";
-
-  const heading = document.createElement("div");
-  heading.className = "course-results-heading";
-  heading.textContent = "All scenes";
-  box.appendChild(heading);
-
-  const summary = document.createElement("div");
-  summary.className = "course-results-summary";
-  const solved = results.filter(row => row.result.ok).length;
-  summary.textContent = `${solved} of ${results.length} scenes solved with the working rulebook`;
-  box.appendChild(summary);
-
-  const list = document.createElement("div");
-  list.className = "course-result-list";
-  results.forEach(({task, result}) => {
-    const row = document.createElement("div");
-    row.className = `course-result ${result.ok ? "ok" : "bad"}`;
-    const label = document.createElement("span");
-    label.textContent = task.label;
-    const outcome = document.createElement("span");
-    outcome.textContent = result.ok ? "Solved" : "Not solved";
-    row.append(label, outcome);
-    list.appendChild(row);
-  });
-  box.appendChild(list);
-}
-
-function runAllScenes(){
-  if(timer){ clearInterval(timer); timer = null; }
-  const norms = currentNorms();
-  const results = TASKS.map(task => ({task, result:simulate(task, norms)}));
-  const solved = results.filter(row => row.result.ok).length;
-  renderCourseResults(results);
-  recordRuleEvent("rulebook_scope_checked", {
-    solved_shifts:solved,
-    total_shifts:TASKS.length,
-    scope:"working_rulebook_across_all_scenes",
-    active_rule_ids:rules.map(rule => rule.id),
-    saved_library_rule_ids:library.map(entry => entry.id),
-    outcomes:results.map(({task, result}) => ({
-      shift_id:task.id,
-      ok:result.ok,
-      reason:result.reason,
-    })),
-  });
-  setStatus(
-    solved === TASKS.length
-      ? "The working rulebook solves every scene."
-      : `The working rulebook solves ${solved} of ${TASKS.length} scenes.`,
-    solved === TASKS.length ? "ok" : "bad",
-  );
-}
-
-function checkWholeRulebook(){
-  runAllScenes();
 }
 
 function download(name, mime, content){

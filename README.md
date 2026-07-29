@@ -13,7 +13,7 @@ file:///Users/kiki/Agent%20social/norm-task/index.html
 
 - controlled `10 x 10` warehouse maps;
 - only the robots relevant to each contrast are shown;
-- eleven scenes arranged as three foundation branches, refinements, pairwise combinations, and one integrated workflow;
+- ten scenes arranged as foundations, refinements, reuse tests, and one integrated final scene;
 - one scene-specific rule set that is preserved when a scene is revisited;
 - an optional saved-rule library that can be reused in later scenes;
 - one action frame: `IF conditions THEN do not move into the square`;
@@ -29,15 +29,17 @@ Current exact calibration:
 
 ```text
 canonical single rules       5,669
-minimum rulebook size        3
-minimum total MDL            8 conditions
-minimum-MDL rulebooks        2
-compositional search cost    5,739 rulebooks enumerated
+T10 minimum reusable rules   3
+T10 minimum reusable MDL     9 conditions
+T10 reusable pairs tested    72,771; 0 solutions
+T10 lower-MDL triples tested 82,948; 0 solutions
+explicit T10 shortcut        5 rules, MDL 17
 ```
 
-The minimum systems contain three rules. The theory-guided reference system
-also has three rules but MDL 9; the shorter systems use a valid route-shaping
-shortcut, which is retained as behavioral evidence.
+The T10 reference contains the precise safety rule, the road direction
+convention scoped away from machines, and the operator-first machine rule.
+Each component has successful evidence in earlier scenes. The task never asks
+one rulebook to solve all ten scenes.
 
 ## Source of truth
 
