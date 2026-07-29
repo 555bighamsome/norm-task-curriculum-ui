@@ -152,7 +152,7 @@ const PAGES = [
     points:[
       "A condition has three fields: object, IS / IS NOT, and fact.",
       "Select Practice object, IS, and marked; then select Add condition.",
-      "Press Run to test the rule. Save it to the library once it works.",
+      "Press Run to test the rule. You may save a useful rule to the library for later reuse.",
       "Within one rule, conditions are joined by AND: all must be true.",
       "Use Add Rule for a separate rule. A move is forbidden if any active rule matches it.",
       "Every active rule is shared: every robot in that scene follows it.",
@@ -161,14 +161,14 @@ const PAGES = [
     controls:true,
     initialNote:"Press Run first, or build a rule and test it.",
     reference:"rule",
-    requires:"practice_saved",
+    requires:"practice_solved",
   },
   {
     id:"library",
     title:"Reuse a rule in a new scene",
     lead:"The same marked-square problem now appears in a different layout.",
     points:[
-      "Rules saved in the library remain available throughout the whole task, across every scene.",
+      "Saving a rule is optional. Rules you do save remain available throughout the whole task, across every scene.",
       "A saved rule is not active in a new scene until you add it to that scene's rulebook.",
       "Select Add to rulebook, then press Run.",
     ],
@@ -176,7 +176,7 @@ const PAGES = [
     controls:true,
     initialNote:"This is a new scene. No rules are active yet.",
     reference:"library",
-    requires:"reuse",
+    requires:"reuse_if_saved",
   },
 ];
 
@@ -457,8 +457,8 @@ function practiceConditionText(operator, term){
 function updateContinueState(){
   const requirement = PAGES[state.page].requires;
   el("tut-continue").disabled =
-    (requirement === "practice_saved" && (!state.practiceSolved || !state.practiceSaved)) ||
-    (requirement === "reuse" && !state.reuseSolved);
+    (requirement === "practice_solved" && !state.practiceSolved) ||
+    (requirement === "reuse_if_saved" && state.practiceSaved && !state.reuseSolved);
 }
 
 function bindRulePractice(){
@@ -506,7 +506,7 @@ function ruleReferenceMarkup(){
     : !state.practiceSolved
       ? {label:"Step 2", text:"Click Run to test the rule."}
       : !state.practiceSaved
-        ? {label:"Step 3", text:"The rule worked. Click Save to library."}
+        ? {label:"Optional", text:"The rule worked. Save it to the library to see how reuse works in the next example."}
         : {label:"Saved", text:"Continue to learn how to add this saved rule to a new scene."};
   return `
     <div class="tut-rule-instruction ${state.practiceSaved ? "is-complete" : ""}">
@@ -546,7 +546,7 @@ function ruleReferenceMarkup(){
       ? state.practiceSolved && state.practiceSaved
         ? "The rule worked and is saved. Continue to see the library in a new scene."
         : state.practiceSolved
-          ? "The rule worked. Save it to the library before continuing."
+          ? "The rule worked. You can continue now, or save it to the library to reuse it in the next example."
           : state.practiceSaved
             ? "The rule is saved. Press Run to check whether it solves this scene."
             : "Condition added. Press Run to test it; use Change condition if it does not work."
@@ -556,6 +556,25 @@ function ruleReferenceMarkup(){
 
 function libraryReferenceMarkup(){
   const text = state.practiceCondition?.text || "the robot is moving north";
+  if(!state.practiceSaved){
+    return `
+      <div class="tut-library-instruction">
+        <span>Optional</span>
+        <strong>The library is empty because no rule was saved in the previous scene.</strong>
+      </div>
+      <div class="tut-library-demo">
+        <section>
+          <h3>Rules in this scene</h3>
+          <p class="tut-library-empty">No active rules.</p>
+        </section>
+        <section>
+          <h3>Saved rule library</h3>
+          <p class="tut-library-empty">No saved rules.</p>
+        </section>
+      </div>
+      <p class="tut-practice-help">In the task, save a rule only when you want to use it again in a later scene. You can also build a new rule from scratch.</p>
+    `;
+  }
   return `
     <div class="tut-library-instruction ${state.practiceUsed ? "is-complete" : ""}">
       <span>${state.practiceUsed ? "Added" : "Step 1"}</span>

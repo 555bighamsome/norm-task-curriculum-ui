@@ -1851,22 +1851,19 @@ body.tutorial-active{overflow:hidden;}
   display:flex;
   align-items:center;
   gap:9px;
-  margin:0 0 10px;
-  padding:9px 10px;
-  border-left:3px solid #185fa5;
-  background:#edf5fc;
-  color:#174e80;
-  font-size:12px;
+  margin:0 0 8px;
+  color:#59616a;
+  font-size:11px;
   line-height:1.35;
 }
 .tut-rule-instruction span{
   flex:0 0 auto;
-  color:#174e80;
+  color:#25292d;
   font-weight:800;
 }
 .tut-rule-instruction strong{font-weight:700;}
-.tut-rule-instruction.is-complete{border-left-color:#0f6e56;background:#eef6f3;color:#0f6e56;}
-.tut-rule-instruction.is-complete span{color:#0f6e56;}
+.tut-rule-instruction.is-complete{color:#59616a;}
+.tut-rule-instruction.is-complete span{color:#25292d;}
 .tut-rule-builder{border-bottom:1px solid #bfc4c9;}
 .tut-practice-editor{
   display:grid;
@@ -1928,11 +1925,9 @@ body.tutorial-active{overflow:hidden;}
 .tut-save-from-rule:disabled{cursor:default;opacity:.45;}
 .tut-rule-cond.completed b{color:#185fa5;font-weight:600;}
 .tut-practice-help{
-  margin:0;
-  padding:9px 11px;
-  border-left:3px solid #185fa5;
-  background:#f2f6fa;
-  color:#4d555d;
+  margin:10px 0 0;
+  padding:0;
+  color:#59616a;
   font-size:11px;
   line-height:1.45;
 }
