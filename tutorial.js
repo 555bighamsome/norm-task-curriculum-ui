@@ -153,6 +153,7 @@ const PAGES = [
       "A condition has three fields: object, IS / IS NOT, and fact.",
       "Select Practice object, IS, and marked; then select Add condition.",
       "Press Run to test the rule. A correct rule makes the robot take another route.",
+      "Save the working rule to the library before continuing.",
       "Additional conditions are joined by AND; all must be true for the rule to apply.",
       "Every active rule is shared: every robot in that scene follows it.",
     ],
@@ -160,21 +161,21 @@ const PAGES = [
     controls:true,
     initialNote:"Press Run first, or build a rule and test it.",
     reference:"rule",
-    requires:"practice",
+    requires:"practice_saved",
   },
   {
     id:"library",
     title:"Reuse a rule in a new scene",
     lead:"The same marked-square problem now appears in a different layout.",
     points:[
-      "Save the rule that solved the previous practice scene.",
-      "The saved rule appears in the library, but it is not active here yet.",
-      "Select Use to add a copy to this new scene, then press Run.",
+      "The rule saved in the previous scene is still in the library.",
+      "It is not active in this new scene yet.",
+      "Select Add to rulebook, then press Run.",
       "In the task, reused rules should still be tested and revised when necessary.",
     ],
     scene:RULE_REUSE_SCENE,
     controls:true,
-    initialNote:"This is a new scene. The previous rule is not active yet.",
+    initialNote:"This is a new scene. No rules are active yet.",
     reference:"library",
     requires:"reuse",
   },
@@ -457,7 +458,7 @@ function practiceConditionText(operator, term){
 function updateContinueState(){
   const requirement = PAGES[state.page].requires;
   el("tut-continue").disabled =
-    (requirement === "practice" && !state.practiceSolved) ||
+    (requirement === "practice_saved" && (!state.practiceSolved || !state.practiceSaved)) ||
     (requirement === "reuse" && !state.reuseSolved);
 }
 
@@ -507,7 +508,12 @@ function ruleReferenceMarkup(){
       <div class="tut-rule-action"><span>FORBID</span><strong>MOVE INTO A SQUARE</strong></div>
       ${condition ? `
         <div class="tut-rule-cond completed"><span>WHEN</span><b>${condition.text}</b></div>
-        <button class="tut-change-condition" id="tut-change-condition" type="button">Change condition</button>
+        <div class="tut-practice-rule-actions">
+          <button class="tut-change-condition" id="tut-change-condition" type="button">Change condition</button>
+          <button class="tut-save-from-rule" id="tut-save-from-rule" type="button" ${state.practiceSaved ? "disabled" : ""}>
+            ${state.practiceSaved ? "Saved to library" : "Save to library"}
+          </button>
+        </div>
       ` : `
         <div class="tut-practice-editor">
           <span>WHEN</span>
@@ -528,9 +534,13 @@ function ruleReferenceMarkup(){
       `}
     </div>
     <p class="tut-practice-help">${condition
-      ? state.practiceSolved
-        ? "The rule worked. Robot 0 avoided the marked square and reached its target."
-        : "Condition added. Press Run to test it; use Change condition if it does not work."
+      ? state.practiceSolved && state.practiceSaved
+        ? "The rule worked and is saved. Continue to see the library in a new scene."
+        : state.practiceSolved
+          ? "The rule worked. Save it to the library before continuing."
+          : state.practiceSaved
+            ? "The rule is saved. Press Run to check whether it solves this scene."
+            : "Condition added. Press Run to test it; use Change condition if it does not work."
       : "Run without a rule to observe the problem, then build the practice rule."}</p>
   `;
 }
@@ -540,48 +550,34 @@ function libraryReferenceMarkup(){
   return `
     <div class="tut-library-demo">
       <section>
-        <h3>Rule from the previous scene</h3>
-        <div class="tut-library-rule">
-          <div><span>FORBID</span> MOVE INTO A SQUARE</div>
-          <div><span>WHEN</span> ${text}</div>
-        </div>
-        <button id="tut-save-practice" type="button" ${state.practiceSaved ? "disabled" : ""}>
-          ${state.practiceSaved ? "Saved" : "Save to library"}
-        </button>
+        <h3>Rules in this scene</h3>
+        ${state.practiceUsed ? `
+          <div class="tut-library-rule">
+            <div><span>FORBID</span> MOVE INTO A SQUARE</div>
+            <div><span>WHEN</span> ${text}</div>
+          </div>
+        ` : '<p class="tut-library-empty">No active rules.</p>'}
       </section>
       <section>
         <h3>Saved rule library</h3>
-        ${state.practiceSaved ? `
-          <div class="tut-saved-row">
-            <span>FORBID MOVE INTO A SQUARE WHEN ${text}</span>
-            <button id="tut-use-practice" type="button" ${state.practiceUsed ? "disabled" : ""}>
-              ${state.practiceUsed ? "In scene" : "Use"}
-            </button>
-          </div>
-        ` : '<p class="tut-library-empty">No saved rules yet.</p>'}
+        <div class="tut-saved-row">
+          <span>FORBID MOVE INTO A SQUARE WHEN ${text}</span>
+          <button id="tut-use-practice" type="button" ${state.practiceUsed ? "disabled" : ""}>
+            ${state.practiceUsed ? "Added" : "Add to rulebook"}
+          </button>
+        </div>
       </section>
     </div>
     <p class="tut-practice-help">${state.reuseSolved
       ? "The reused rule worked in the new layout. It remains saved in the library."
       : state.practiceUsed
         ? "A copy of the saved rule is now active in this scene. Press Run to test it."
-      : state.practiceSaved
-        ? "Now select Use to add a copy of the saved rule to the scene."
-        : "First save the rule from the previous practice scene."}</p>
+        : "Select Add to rulebook to copy the saved rule into this scene."}</p>
   `;
 }
 
 function bindLibraryPractice(){
-  const save = el("tut-save-practice");
   const use = el("tut-use-practice");
-  if(save){
-    save.onclick = () => {
-      state.practiceSaved = true;
-      emit("tutorial_library_saved", {condition:state.practiceCondition?.text || null});
-      renderReference("library");
-      updateContinueState();
-    };
-  }
   if(use){
     use.onclick = () => {
       state.practiceUsed = true;
@@ -604,6 +600,15 @@ function renderReference(kind){
     host.innerHTML = ruleReferenceMarkup();
     bindRulePractice();
     const change = el("tut-change-condition");
+    const save = el("tut-save-from-rule");
+    if(save){
+      save.onclick = () => {
+        state.practiceSaved = true;
+        emit("tutorial_library_saved", {condition:state.practiceCondition?.text || null});
+        renderReference("rule");
+        updateContinueState();
+      };
+    }
     if(change){
       change.onclick = () => {
         state.practiceCondition = null;

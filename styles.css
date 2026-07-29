@@ -1867,7 +1867,7 @@ body.tutorial-active{overflow:hidden;}
   font-weight:800;
 }
 .tut-practice-editor select,.tut-practice-editor button,
-.tut-change-condition,.tut-library-demo button{
+.tut-change-condition,.tut-save-from-rule,.tut-library-demo button{
   min-width:0;
   height:34px;
   border:1px solid #9da4ac;
@@ -1890,13 +1890,26 @@ body.tutorial-active{overflow:hidden;}
 .tut-change-condition{
   width:max-content;
   height:auto;
-  margin:7px 0 9px 55px;
+  margin:0;
   padding:3px 0;
   border:0;
   border-bottom:1px solid #8c939a;
   color:#59616a;
   cursor:pointer;
 }
+.tut-practice-rule-actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:7px 0 9px 55px;
+}
+.tut-save-from-rule{
+  flex:0 0 auto;
+  padding:0 10px;
+  cursor:pointer;
+}
+.tut-save-from-rule:disabled{cursor:default;opacity:.45;}
 .tut-rule-cond.completed b{color:#185fa5;font-weight:600;}
 .tut-practice-help{
   margin:0;
