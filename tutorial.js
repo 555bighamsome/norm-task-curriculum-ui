@@ -25,6 +25,7 @@ const state = {
   pageVisits:[],
   runs:[],
   practiceCondition:null,
+  practiceSolved:false,
   practiceSaved:false,
   practiceUsed:false,
 };
@@ -85,6 +86,13 @@ const COLLISION_SCENE = makeScene(
   ],
 );
 
+const RULE_PRACTICE_SCENE = makeScene(
+  "tutorial_rule_practice",
+  [[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[4,0],[4,1],[4,2],[4,3],[4,4],[4,5],[4,6]],
+  [carrier(0, [2,0], [2,6])],
+);
+RULE_PRACTICE_SCENE.practiceMarked = [2,3];
+
 const PAGES = [
   {
     id:"goal",
@@ -131,17 +139,20 @@ const PAGES = [
   },
   {
     id:"rules",
-    title:"Write a rule",
-    lead:"A rule forbids a move only when all of its conditions are true. Complete one practice condition.",
+    title:"Build, test, and refine a rule",
+    lead:"Entering the marked square causes this practice scene to fail. Build a rule that prevents the robot from entering it.",
     points:[
       "A condition has three fields: object, IS / IS NOT, and fact.",
-      "In the task, an object can be the Target square, Robot, or Movement.",
-      "For practice, choose Practice object, a relation, and marked; then select Add condition.",
+      "Select Practice object, IS, and marked; then select Add condition.",
+      "Press Run to test the rule. A correct rule makes the robot take another route.",
       "Additional conditions are joined by AND; all must be true for the rule to apply.",
       "Every active rule is shared: every robot in that scene follows it.",
     ],
+    scene:RULE_PRACTICE_SCENE,
+    controls:true,
+    initialNote:"Press Run first, or build a rule and test it.",
     reference:"rule",
-    requires:"condition",
+    requires:"practice",
   },
   {
     id:"library",
@@ -182,6 +193,10 @@ function drawBoard(host, scene, frame=null){
       cell.style.width = `${blocked ? CELL : CELL - 4}px`;
       cell.style.height = `${blocked ? CELL : CELL - 4}px`;
       cell.dataset.tutorialCell = K(row, col);
+      if(scene.practiceMarked && sameCell(scene.practiceMarked, [row, col])){
+        cell.classList.add("practice-marked");
+        cell.innerHTML = "<span>Marked</span>";
+      }
       host.appendChild(cell);
     }
   }
@@ -225,6 +240,34 @@ function drawBoard(host, scene, frame=null){
   }
 }
 
+function rulePracticeResult(){
+  const condition = state.practiceCondition;
+  const blocksMarkedSquare =
+    condition?.object === "practice" &&
+    condition?.operator === "IS" &&
+    condition?.fact === "marked";
+  const path = blocksMarkedSquare
+    ? [[2,0],[2,1],[2,2],[1,2],[1,3],[1,4],[2,4],[2,5],[2,6]]
+    : [[2,0],[2,1],[2,2],[2,3]];
+  const frames = path.map((position, index) => ({
+    pos:{0:position},
+    agents:{
+      0:{
+        done:blocksMarkedSquare && index === path.length - 1,
+        failed:!blocksMarkedSquare && index === path.length - 1,
+      },
+    },
+    event:!blocksMarkedSquare && index === path.length - 1
+      ? {type:"practice_marked", cell:[2,3], agent:0}
+      : null,
+  }));
+  return {
+    ok:blocksMarkedSquare,
+    reason:blocksMarkedSquare ? "ok" : "practice_marked",
+    frames,
+  };
+}
+
 function feedbackEntry(result){
   if(result.ok){
     const steps = Math.max(0, result.frames.length - 1);
@@ -241,6 +284,13 @@ function feedbackEntry(result){
       kind:"bad",
       title:"Collision",
       text:`${names || "The robots"} tried to enter the same square in the same step.`,
+    };
+  }
+  if(result.reason === "practice_marked"){
+    return {
+      kind:"bad",
+      title:"Not solved",
+      text:"Robot 0 entered the marked square.",
     };
   }
   return {
@@ -268,7 +318,10 @@ function showFrame(index, inspected=false){
   el("tut-step-label").textContent = `Step ${state.frameIndex} / ${state.frames.length - 1}`;
   el("tut-prev").disabled = state.frameIndex === 0;
   el("tut-next-step").disabled = state.frameIndex === state.frames.length - 1;
-  if(state.frameIndex === state.frames.length - 1) setFeedback(feedbackEntry(state.result));
+  if(state.frameIndex === state.frames.length - 1){
+    setFeedback(feedbackEntry(state.result));
+    if(page.id === "rules") renderReference("rule");
+  }
   if(inspected){
     emit("tutorial_step_inspected", {
       tutorial_page:page.id,
@@ -281,9 +334,15 @@ function runCurrentScene(){
   const page = PAGES[state.page];
   if(!page.scene) return;
   stopAnimation();
-  state.result = simulate(page.scene, []);
+  state.result = page.id === "rules"
+    ? rulePracticeResult()
+    : simulate(page.scene, []);
   state.frames = state.result.frames || [];
   state.frameIndex = 0;
+  if(page.id === "rules"){
+    state.practiceSolved = state.result.ok;
+    updateContinueState();
+  }
   state.runs.push({
     page_id:page.id,
     ok:state.result.ok,
@@ -357,7 +416,7 @@ function practiceConditionText(operator, term){
 function updateContinueState(){
   const requirement = PAGES[state.page].requires;
   el("tut-continue").disabled =
-    (requirement === "condition" && !state.practiceCondition) ||
+    (requirement === "practice" && !state.practiceSolved) ||
     (requirement === "library" && !state.practiceUsed);
 }
 
@@ -391,7 +450,9 @@ function bindRulePractice(){
       fact:fact.value,
       text:practiceConditionText(operator.value, term),
     };
+    state.practiceSolved = false;
     emit("tutorial_condition_created", {...state.practiceCondition});
+    resetCurrentScene();
     renderReference("rule");
     updateContinueState();
   };
@@ -426,8 +487,10 @@ function ruleReferenceMarkup(){
       `}
     </div>
     <p class="tut-practice-help">${condition
-      ? "Condition added. In the task, select + Add condition to add another AND condition."
-      : "Choose any complete condition. There is no correct answer in this practice step."}</p>
+      ? state.practiceSolved
+        ? "The rule worked. Robot 0 avoided the marked square and reached its target."
+        : "Condition added. Press Run to test it; use Change condition if it does not work."
+      : "Run without a rule to observe the problem, then build the practice rule."}</p>
   `;
 }
 
@@ -498,8 +561,10 @@ function renderReference(kind){
     if(change){
       change.onclick = () => {
         state.practiceCondition = null;
+        state.practiceSolved = false;
         state.practiceSaved = false;
         state.practiceUsed = false;
+        resetCurrentScene();
         renderReference("rule");
         updateContinueState();
       };
@@ -532,6 +597,7 @@ function renderPage(index){
 
   const visual = el("tut-visual");
   const ruleReference = el("tut-rule-reference");
+  document.querySelector(".tut-panel")?.classList.toggle("has-rule-practice", page.id === "rules");
   visual.hidden = !page.scene;
   ruleReference.hidden = !page.reference;
 
@@ -566,6 +632,7 @@ function completeTutorial(){
     runs:state.runs,
     practice:{
       condition_created:!!state.practiceCondition,
+      rule_solved:state.practiceSolved,
       library_saved:state.practiceSaved,
       library_used:state.practiceUsed,
     },
@@ -610,6 +677,7 @@ window.ResearchTutorial = {
     state.startedAt = Date.now();
     state.pageStartedAt = 0;
     state.practiceCondition = null;
+    state.practiceSolved = false;
     state.practiceSaved = false;
     state.practiceUsed = false;
     document.body.classList.add("tutorial-active");

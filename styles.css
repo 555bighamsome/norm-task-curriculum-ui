@@ -1984,3 +1984,28 @@ body.tutorial-active{overflow:hidden;}
   .onboarding-footer{grid-template-columns:1fr auto 1fr;padding:12px 20px;}
 }
 .tut-board .cell.flash{box-shadow:0 0 0 3px #a32d2d;}
+.tut-board .cell.practice-marked{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:
+    repeating-linear-gradient(135deg,#ece8cf 0,#ece8cf 5px,#c7bd79 5px,#c7bd79 8px);
+  border:2px solid #817638;
+  color:#413c22;
+  font-size:7px;
+  font-weight:800;
+  letter-spacing:0;
+  text-transform:uppercase;
+}
+.tut-panel.has-rule-practice .tut-board-frame{padding:8px;}
+.tut-panel.has-rule-practice .tut-feedback{
+  min-height:38px;
+  margin-top:7px;
+  padding:6px 10px;
+}
+.tut-panel.has-rule-practice .tut-controls{margin-top:7px;}
+.tut-panel.has-rule-practice .tut-rule-reference{
+  gap:12px;
+  padding:11px 0 0;
+}
+.tut-panel.has-rule-practice .tut-practice-label{margin-bottom:-5px;}
