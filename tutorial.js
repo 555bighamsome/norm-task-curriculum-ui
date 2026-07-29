@@ -123,7 +123,7 @@ const PAGES = [
       "All active robots act during the same time step.",
       "If multiple robots try to enter the same square in the same step, they collide.",
       "The scene is solved only when every active robot completes its target.",
-      "Run feedback identifies what happened; the arrows show where it happened.",
+      "After a run, use the arrows to inspect the robots' positions at each time step.",
     ],
     scene:COLLISION_SCENE,
     controls:true,
