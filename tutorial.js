@@ -28,6 +28,7 @@ const state = {
   practiceSolved:false,
   practiceSaved:false,
   practiceUsed:false,
+  reuseSolved:false,
 };
 
 function makeScene(id, walls, agents){
@@ -93,6 +94,13 @@ const RULE_PRACTICE_SCENE = makeScene(
 );
 RULE_PRACTICE_SCENE.practiceMarked = [2,3];
 
+const RULE_REUSE_SCENE = makeScene(
+  "tutorial_rule_reuse",
+  [[0,0],[1,0],[2,0],[3,0],[4,0],[0,6],[1,6],[2,6],[3,6],[4,6]],
+  [carrier(0, [0,3], [4,3])],
+);
+RULE_REUSE_SCENE.practiceMarked = [2,3];
+
 const PAGES = [
   {
     id:"goal",
@@ -156,16 +164,19 @@ const PAGES = [
   },
   {
     id:"library",
-    title:"Save and reuse a rule",
-    lead:"Use the practice rule to learn what the saved rule library does.",
+    title:"Reuse a rule in a new scene",
+    lead:"The same marked-square problem now appears in a different layout.",
     points:[
-      "Save to library stores a rule for possible use in another scene.",
-      "Saving does not automatically activate the rule in other scenes.",
-      "Select Use to add a copy of the saved rule to the current scene.",
-      "A reused rule should still be tested and revised when necessary.",
+      "Save the rule that solved the previous practice scene.",
+      "The saved rule appears in the library, but it is not active here yet.",
+      "Select Use to add a copy to this new scene, then press Run.",
+      "In the task, reused rules should still be tested and revised when necessary.",
     ],
+    scene:RULE_REUSE_SCENE,
+    controls:true,
+    initialNote:"This is a new scene. The previous rule is not active yet.",
     reference:"library",
-    requires:"library",
+    requires:"reuse",
   },
 ];
 
@@ -268,6 +279,29 @@ function rulePracticeResult(){
   };
 }
 
+function ruleReuseResult(){
+  const path = state.practiceUsed
+    ? [[0,3],[1,3],[1,2],[2,2],[3,2],[3,3],[4,3]]
+    : [[0,3],[1,3],[2,3]];
+  const frames = path.map((position, index) => ({
+    pos:{0:position},
+    agents:{
+      0:{
+        done:state.practiceUsed && index === path.length - 1,
+        failed:!state.practiceUsed && index === path.length - 1,
+      },
+    },
+    event:!state.practiceUsed && index === path.length - 1
+      ? {type:"practice_marked", cell:[2,3], agent:0}
+      : null,
+  }));
+  return {
+    ok:state.practiceUsed,
+    reason:state.practiceUsed ? "ok" : "practice_marked",
+    frames,
+  };
+}
+
 function feedbackEntry(result){
   if(result.ok){
     const steps = Math.max(0, result.frames.length - 1);
@@ -321,6 +355,7 @@ function showFrame(index, inspected=false){
   if(state.frameIndex === state.frames.length - 1){
     setFeedback(feedbackEntry(state.result));
     if(page.id === "rules") renderReference("rule");
+    if(page.id === "library") renderReference("library");
   }
   if(inspected){
     emit("tutorial_step_inspected", {
@@ -336,11 +371,17 @@ function runCurrentScene(){
   stopAnimation();
   state.result = page.id === "rules"
     ? rulePracticeResult()
-    : simulate(page.scene, []);
+    : page.id === "library"
+      ? ruleReuseResult()
+      : simulate(page.scene, []);
   state.frames = state.result.frames || [];
   state.frameIndex = 0;
   if(page.id === "rules"){
     state.practiceSolved = state.result.ok;
+    updateContinueState();
+  }
+  if(page.id === "library"){
+    state.reuseSolved = state.result.ok;
     updateContinueState();
   }
   state.runs.push({
@@ -417,7 +458,7 @@ function updateContinueState(){
   const requirement = PAGES[state.page].requires;
   el("tut-continue").disabled =
     (requirement === "practice" && !state.practiceSolved) ||
-    (requirement === "library" && !state.practiceUsed);
+    (requirement === "reuse" && !state.reuseSolved);
 }
 
 function bindRulePractice(){
@@ -499,7 +540,7 @@ function libraryReferenceMarkup(){
   return `
     <div class="tut-library-demo">
       <section>
-        <h3>Rule in the scene</h3>
+        <h3>Rule from the previous scene</h3>
         <div class="tut-library-rule">
           <div><span>FORBID</span> MOVE INTO A SQUARE</div>
           <div><span>WHEN</span> ${text}</div>
@@ -520,11 +561,13 @@ function libraryReferenceMarkup(){
         ` : '<p class="tut-library-empty">No saved rules yet.</p>'}
       </section>
     </div>
-    <p class="tut-practice-help">${state.practiceUsed
-      ? "The saved rule remains in the library, and a copy is now active in the scene."
+    <p class="tut-practice-help">${state.reuseSolved
+      ? "The reused rule worked in the new layout. It remains saved in the library."
+      : state.practiceUsed
+        ? "A copy of the saved rule is now active in this scene. Press Run to test it."
       : state.practiceSaved
         ? "Now select Use to add a copy of the saved rule to the scene."
-        : "First save the practice rule."}</p>
+        : "First save the rule from the previous practice scene."}</p>
   `;
 }
 
@@ -542,7 +585,10 @@ function bindLibraryPractice(){
   if(use){
     use.onclick = () => {
       state.practiceUsed = true;
+      state.reuseSolved = false;
       emit("tutorial_library_used", {condition:state.practiceCondition?.text || null});
+      resetCurrentScene();
+      setFeedback(null, "The saved rule is active in this scene. Press Run to test it.");
       renderReference("library");
       updateContinueState();
     };
@@ -564,6 +610,7 @@ function renderReference(kind){
         state.practiceSolved = false;
         state.practiceSaved = false;
         state.practiceUsed = false;
+        state.reuseSolved = false;
         resetCurrentScene();
         renderReference("rule");
         updateContinueState();
@@ -597,7 +644,10 @@ function renderPage(index){
 
   const visual = el("tut-visual");
   const ruleReference = el("tut-rule-reference");
-  document.querySelector(".tut-panel")?.classList.toggle("has-rule-practice", page.id === "rules");
+  document.querySelector(".tut-panel")?.classList.toggle(
+    "has-rule-practice",
+    page.id === "rules" || page.id === "library",
+  );
   visual.hidden = !page.scene;
   ruleReference.hidden = !page.reference;
 
@@ -635,6 +685,7 @@ function completeTutorial(){
       rule_solved:state.practiceSolved,
       library_saved:state.practiceSaved,
       library_used:state.practiceUsed,
+      reuse_solved:state.reuseSolved,
     },
   };
   emit("tutorial_completed", {
@@ -680,6 +731,7 @@ window.ResearchTutorial = {
     state.practiceSolved = false;
     state.practiceSaved = false;
     state.practiceUsed = false;
+    state.reuseSolved = false;
     document.body.classList.add("tutorial-active");
     document.querySelector(".wrap")?.setAttribute("aria-hidden", "true");
     screen.hidden = false;
